@@ -62,6 +62,10 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       );
       if (!mounted) return;
       if (user != null) {
+        // 교회코드 저장 (로그인 유지용)
+        final code = widget.churchData['code'] as String? ?? '';
+        if (code.isNotEmpty) await _authService.saveChurchCode(code);
+        if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -110,6 +114,9 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       );
       if (!mounted) return;
       if (user != null) {
+        // 교회코드 저장 (로그인 유지용)
+        if (churchCode.isNotEmpty) await _authService.saveChurchCode(churchCode);
+        if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(

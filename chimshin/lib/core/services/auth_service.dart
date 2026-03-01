@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -41,6 +42,9 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw Exception(_authErrorMessage(e.code));
     } catch (e) {
+      // SDK 내부 오류가 발생했지만 실제로 로그인 된 경우 처리
+      final current = _auth.currentUser;
+      if (current != null) return current;
       throw Exception('로그인 중 오류가 발생했습니다');
     }
   }
@@ -68,8 +72,25 @@ class AuthService {
     }
   }
 
+  // ─── 교회코드 저장 / 로드 (SharedPreferences) ────
+  Future<void> saveChurchCode(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('church_code', code);
+  }
+
+  Future<String?> getSavedChurchCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('church_code');
+  }
+
+  Future<void> clearChurchCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('church_code');
+  }
+
   // ─── 로그아웃 ─────────────────────────────────────
   Future<void> signOut() async {
+    await clearChurchCode();
     await _auth.signOut();
   }
 
