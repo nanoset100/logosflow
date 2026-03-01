@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/auth_service.dart';
+import 'email_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,8 +14,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _churchCodeController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
-  String? _churchName;
+  Map<String, dynamic>? _churchData;
 
   @override
   void dispose() {
@@ -21,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ─── 교회 코드 Firestore 검증 ─────────────────────
   Future<void> _verifyChurchCode() async {
     final code = _churchCodeController.text.trim();
 
@@ -28,53 +32,75 @@ class _LoginScreenState extends State<LoginScreen> {
       _showSnackBar('교회 코드를 입력해주세요');
       return;
     }
-
-    if (code.length != 6) {
-      _showSnackBar('교회 코드는 6자리입니다');
+    if (code.length < 4) {
+      _showSnackBar('교회 코드를 정확히 입력해주세요');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    // TODO: Firestore에서 교회 코드 검증
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final data = await _authService.verifyChurchCode(code);
+      if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-      _churchName = '강남중앙침례교회'; // 테스트용
-    });
+      if (data == null) {
+        _showSnackBar('존재하지 않는 교회 코드입니다', isError: true);
+        setState(() => _churchData = null);
+      } else {
+        setState(() => _churchData = data);
+      }
+    } catch (e) {
+      if (mounted) _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  void _loginWithEmail() {
-    if (_churchName == null) {
-      _showSnackBar('먼저 교회 코드를 입력해주세요');
+  // ─── 이메일 로그인 화면으로 이동 ──────────────────
+  void _goToEmailLogin() {
+    if (_churchData == null) {
+      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
       return;
     }
-
-    // TODO: 이메일 로그인 화면으로 이동
-    _showSnackBar('이메일 로그인 (개발 예정)');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EmailLoginScreen(churchData: _churchData!),
+      ),
+    );
   }
 
   void _loginWithKakao() {
-    if (_churchName == null) {
-      _showSnackBar('먼저 교회 코드를 입력해주세요');
+    if (_churchData == null) {
+      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
       return;
     }
-
-    // TODO: 카카오 로그인
-    _showSnackBar('카카오 로그인 (개발 예정)');
+    _showSnackBar('카카오 로그인은 준비 중입니다');
   }
 
   void _goToSignUp() {
-    // TODO: 회원가입 화면으로 이동
-    _showSnackBar('회원가입 (개발 예정)');
+    if (_churchData == null) {
+      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EmailLoginScreen(
+          churchData: _churchData!,
+          isSignUp: true,
+        ),
+      ),
+    );
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.error : AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -106,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // 앱 이름
               const Text(
                 AppConfig.appName,
                 style: TextStyle(
@@ -146,10 +171,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(
                         child: TextField(
                           controller: _churchCodeController,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
+                          keyboardType: TextInputType.text,
+                          textCapitalization: TextCapitalization.characters,
+                          maxLength: 10,
                           decoration: InputDecoration(
-                            hintText: '6자리 코드 입력',
+                            hintText: '교회 코드 입력 (예: 123456)',
                             counterText: '',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -162,11 +188,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          onChanged: (value) {
-                            if (_churchName != null) {
-                              setState(() {
-                                _churchName = null;
-                              });
+                          onChanged: (_) {
+                            if (_churchData != null) {
+                              setState(() => _churchData = null);
                             }
                           },
                         ),
@@ -194,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // 교회명 표시
-                  if (_churchName != null) ...[
+                  if (_churchData != null) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -211,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _churchName!,
+                            _churchData!['name'] as String,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -231,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _loginWithEmail,
+                  onPressed: _goToEmailLogin,
                   icon: const Icon(Icons.email_outlined),
                   label: const Text('이메일로 로그인'),
                   style: ElevatedButton.styleFrom(
