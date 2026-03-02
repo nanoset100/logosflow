@@ -4,10 +4,12 @@ import '../../../data/models/sermon_model.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   final SermonModel sermon;
+  final int initialTabIndex;
 
   const SermonDetailScreen({
     super.key,
     required this.sermon,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -21,7 +23,11 @@ class _SermonDetailScreenState extends State<SermonDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
   }
 
   @override

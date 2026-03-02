@@ -69,7 +69,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(churchData: widget.churchData),
+            builder: (context) => const HomeScreen(),
           ),
           (route) => false,
         );
@@ -120,7 +120,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(churchData: widget.churchData),
+            builder: (context) => const HomeScreen(),
           ),
           (route) => false,
         );
