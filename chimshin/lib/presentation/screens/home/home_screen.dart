@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../sermon/sermon_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final Map<String, dynamic> churchData;
@@ -206,7 +207,14 @@ class HomeScreen extends StatelessWidget {
                     title: '설교 노트',
                     subtitle: '이번 주 설교 기록',
                     color: AppColors.primary,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SermonListScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _MenuCard(
                     icon: Icons.calendar_today_outlined,
