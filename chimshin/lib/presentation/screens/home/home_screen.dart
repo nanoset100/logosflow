@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../data/services/sermon_service.dart';
+import '../../../data/services/progress_service.dart';
 import '../../../data/models/sermon_model.dart';
+import '../../../data/models/user_progress_model.dart';
 import '../auth/login_screen.dart';
 import '../sermon/sermon_list_screen.dart';
 import '../sermon/sermon_detail_screen.dart';
@@ -18,8 +21,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final SermonService _sermonService = SermonService();
+  final ProgressService _progressService = ProgressService();
   String _churchName = '';
   SermonModel? _latestSermon;
+  UserProgressModel? _latestProgress;
   bool _isLoading = true;
   String? _churchCode;
 
@@ -37,11 +42,19 @@ class _HomeScreenState extends State<HomeScreen> {
       if (code != null && code.isNotEmpty) {
         final churchData = await _authService.verifyChurchCode(code);
         final sermon = await _sermonService.getLatestSermon(code);
+        UserProgressModel? progress;
+        if (sermon != null) {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId != null) {
+            progress = await _progressService.getProgress(userId, sermon.id);
+          }
+        }
         if (mounted) {
           setState(() {
             _churchCode = code;
             _churchName = churchData?['name'] as String? ?? '';
             _latestSermon = sermon;
+            _latestProgress = progress;
           });
         }
       }
@@ -121,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) =>
                             SermonDetailScreen(sermon: _latestSermon!),
                       ),
-                    );
+                    ).then((_) { if (mounted) _loadData(); });
                   },
                 ),
 
@@ -130,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _TodayDevotionCard(
                   dayName: _getTodayDayName(),
                   devotion: _getTodayDevotion(),
+                  progress: _latestProgress,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -137,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) =>
                             SermonDetailScreen(sermon: _latestSermon!),
                       ),
-                    );
+                    ).then((_) { if (mounted) _loadData(); });
                   },
                 ),
               ] else
@@ -164,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               initialTabIndex: 2,
                             ),
                           ),
-                        );
+                        ).then((_) { if (mounted) _loadData(); });
                       }
                     : null,
               ),
@@ -360,11 +374,13 @@ class _LatestSermonCard extends StatelessWidget {
 class _TodayDevotionCard extends StatelessWidget {
   final String dayName;
   final String devotion;
+  final UserProgressModel? progress;
   final VoidCallback onTap;
 
   const _TodayDevotionCard({
     required this.dayName,
     required this.devotion,
+    this.progress,
     required this.onTap,
   });
 
@@ -398,22 +414,51 @@ class _TodayDevotionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      dayName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          dayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // 주간 진행 현황
+                      if (progress != null)
+                        Text(
+                          '${progress!.completedCount}/5일 완료',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (progress != null) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress!.completedCount / 5,
+                        backgroundColor:
+                            AppColors.secondary.withValues(alpha: 0.2),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.secondary),
+                        minHeight: 6,
                       ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 12),
                   Text(
                     devotion.isEmpty
