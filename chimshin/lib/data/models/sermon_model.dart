@@ -62,6 +62,39 @@ class SermonModel {
     };
   }
 
+  // JSON 직렬화 (로컬 저장용)
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'churchCode': churchCode,
+      'title': title,
+      'date': date.millisecondsSinceEpoch,
+      'pastor': pastor,
+      'bibleVerse': bibleVerse,
+      'summary': summary,
+      'audioUrl': audioUrl,
+      'devotionals': devotionals,
+      'keyPoints': keyPoints,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+    };
+  }
+
+  factory SermonModel.fromJson(Map<String, dynamic> data) {
+    return SermonModel(
+      id: data['id'] ?? '',
+      churchCode: data['churchCode'] ?? '',
+      title: data['title'] ?? '',
+      date: DateTime.fromMillisecondsSinceEpoch(data['date'] ?? 0),
+      pastor: data['pastor'] ?? '',
+      bibleVerse: data['bibleVerse'] ?? '',
+      summary: data['summary'] ?? '',
+      audioUrl: data['audioUrl'],
+      devotionals: Map<String, String>.from(data['devotionals'] ?? {}),
+      keyPoints: List<String>.from(data['keyPoints'] ?? []),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt'] ?? 0),
+    );
+  }
+
   // 날짜 포맷 (2026년 2월 23일)
   String get formattedDate {
     return '${date.year}년 ${date.month}월 ${date.day}일';

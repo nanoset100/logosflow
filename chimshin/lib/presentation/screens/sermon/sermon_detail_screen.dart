@@ -6,6 +6,7 @@ import '../../../data/models/sermon_model.dart';
 import '../../../data/models/user_progress_model.dart';
 import '../../../data/services/progress_service.dart';
 import '../../../data/services/tts_service.dart';
+import '../../../data/services/saved_sermon_service.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   final SermonModel sermon;
@@ -190,6 +191,7 @@ class _SummaryTab extends StatefulWidget {
 
 class _SummaryTabState extends State<_SummaryTab> {
   TtsService? _ttsService;
+  final _savedService = SavedSermonService();
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration>? _durSub;
   bool _isLoading = false;
@@ -197,6 +199,8 @@ class _SummaryTabState extends State<_SummaryTab> {
   VoiceType _selectedVoice = VoiceType.male;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  bool _isSaved = false;
+  bool _saveLoading = false;
 
   @override
   void initState() {
@@ -211,6 +215,37 @@ class _SummaryTabState extends State<_SummaryTab> {
       );
     } catch (e) {
       _ttsAvailable = false;
+    }
+    _checkSaved();
+  }
+
+  Future<void> _checkSaved() async {
+    final saved = await _savedService.isSaved(widget.sermon.id);
+    if (mounted) setState(() => _isSaved = saved);
+  }
+
+  Future<void> _toggleSave() async {
+    setState(() => _saveLoading = true);
+    try {
+      if (_isSaved) {
+        await _savedService.unsaveSermon(widget.sermon.id);
+        if (mounted) {
+          setState(() => _isSaved = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('저장이 해제되었습니다'), duration: Duration(seconds: 2)),
+          );
+        }
+      } else {
+        await _savedService.saveSermon(widget.sermon);
+        if (mounted) {
+          setState(() => _isSaved = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('설교가 저장되었습니다 ⭐'), duration: Duration(seconds: 2)),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _saveLoading = false);
     }
   }
 
@@ -510,6 +545,50 @@ class _SummaryTabState extends State<_SummaryTab> {
               height: 1.6,
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // ── 저장 버튼 ─────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: _isSaved
+                ? ElevatedButton.icon(
+                    onPressed: _saveLoading ? null : _toggleSave,
+                    icon: _saveLoading
+                        ? const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.bookmark, size: 20),
+                    label: const Text('저장됨  (탭하여 해제)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: _saveLoading ? null : _toggleSave,
+                    icon: _saveLoading
+                        ? SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: AppColors.primary))
+                        : const Icon(Icons.bookmark_border, size: 20),
+                    label: const Text('⭐ 저장하기'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      minimumSize: const Size(double.infinity, 52),
+                      side: const BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+          ),
+
+          const SizedBox(height: 12),
         ],
       ),
     );
