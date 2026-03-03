@@ -9,28 +9,27 @@ enum VoiceType {
 }
 
 class TtsService {
-  AudioPlayer? _audioPlayer;
+  late final AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   bool _isPaused = false;
   VoiceType _currentVoice = VoiceType.male;
 
-  // .env에서 API 키 로드
   static String get _apiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
 
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;
   VoiceType get currentVoice => _currentVoice;
 
-  // AudioPlayer lazy 초기화 — 실제 사용 시점에 생성
-  AudioPlayer _getPlayer() {
-    if (_audioPlayer == null) {
-      _audioPlayer = AudioPlayer();
-      _audioPlayer!.onPlayerComplete.listen((_) {
-        _isPlaying = false;
-        _isPaused = false;
-      });
-    }
-    return _audioPlayer!;
+  // 재생 위치/길이 스트림
+  Stream<Duration> get onPositionChanged => _audioPlayer.onPositionChanged;
+  Stream<Duration> get onDurationChanged => _audioPlayer.onDurationChanged;
+
+  TtsService() {
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.onPlayerComplete.listen((_) {
+      _isPlaying = false;
+      _isPaused = false;
+    });
   }
 
   void setVoice(VoiceType voice) {
@@ -40,13 +39,13 @@ class TtsService {
   String _getVoiceName(VoiceType voice) {
     switch (voice) {
       case VoiceType.male:
-        return 'alloy'; // 👨 남성
+        return 'alloy';
       case VoiceType.female:
-        return 'nova';  // 👩 여성
+        return 'nova';
     }
   }
 
-  Future<void> speak(String text, {double speed = 1.0}) async {
+  Future<void> speak(String text) async {
     if (_isPlaying) await stop();
 
     final response = await http.post(
@@ -59,13 +58,11 @@ class TtsService {
         'model': 'tts-1',
         'input': text,
         'voice': _getVoiceName(_currentVoice),
-        'speed': speed,
       }),
     );
 
     if (response.statusCode == 200) {
-      final player = _getPlayer();
-      await player.play(BytesSource(response.bodyBytes));
+      await _audioPlayer.play(BytesSource(response.bodyBytes));
       _isPlaying = true;
       _isPaused = false;
     } else {
@@ -76,25 +73,24 @@ class TtsService {
   }
 
   Future<void> pause() async {
-    await _audioPlayer?.pause();
+    await _audioPlayer.pause();
     _isPlaying = false;
     _isPaused = true;
   }
 
   Future<void> resume() async {
-    await _audioPlayer?.resume();
+    await _audioPlayer.resume();
     _isPlaying = true;
     _isPaused = false;
   }
 
   Future<void> stop() async {
-    await _audioPlayer?.stop();
+    await _audioPlayer.stop();
     _isPlaying = false;
     _isPaused = false;
   }
 
   void dispose() {
-    _audioPlayer?.dispose();
-    _audioPlayer = null;
+    _audioPlayer.dispose();
   }
 }
