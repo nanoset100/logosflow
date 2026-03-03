@@ -4,6 +4,7 @@ import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/models/user_progress_model.dart';
 import '../../../data/services/progress_service.dart';
+import '../../../data/services/tts_service.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   final SermonModel sermon;
@@ -177,13 +178,85 @@ class _SermonDetailScreenState extends State<SermonDetailScreen>
 }
 
 // ─── 요약 탭 ───────────────────────────────────────
-class _SummaryTab extends StatelessWidget {
+class _SummaryTab extends StatefulWidget {
   final SermonModel sermon;
 
   const _SummaryTab({required this.sermon});
 
   @override
+  State<_SummaryTab> createState() => _SummaryTabState();
+}
+
+class _SummaryTabState extends State<_SummaryTab> {
+  TtsService? _ttsService;
+  bool _isLoading = false;
+  bool _ttsAvailable = true;
+  VoiceType _selectedVoice = VoiceType.male;
+  double _speed = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _ttsService = TtsService();
+    } catch (e) {
+      _ttsAvailable = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ttsService?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAudio() async {
+    if (_ttsService == null) return;
+    setState(() => _isLoading = true);
+    try {
+      await _ttsService!.speak(widget.sermon.summary, speed: _speed);
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('오디오 오류: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pauseOrResume() async {
+    if (_ttsService == null) return;
+    if (_ttsService!.isPaused) {
+      await _ttsService!.resume();
+    } else {
+      await _ttsService!.pause();
+    }
+    setState(() {});
+  }
+
+  Future<void> _stopAudio() async {
+    await _ttsService?.stop();
+    setState(() {});
+  }
+
+  void _changeVoice(VoiceType voice) {
+    setState(() {
+      _selectedVoice = voice;
+      _ttsService?.setVoice(voice);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isActive = (_ttsService?.isPlaying ?? false) ||
+        (_ttsService?.isPaused ?? false);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -197,9 +270,193 @@ class _SummaryTab extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
+
           const SizedBox(height: 16),
+
+          // ── TTS 불가 안내 ───────────────────────────
+          if (!_ttsAvailable)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '오디오 기능을 사용할 수 없습니다',
+                      style: TextStyle(fontSize: 13, color: Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // ── 음성 선택 ──────────────────────────────
+          if (_ttsAvailable)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '🎙️ 음성 선택',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _VoiceButton(
+                        emoji: '👨',
+                        label: '남성',
+                        isSelected: _selectedVoice == VoiceType.male,
+                        color: AppColors.primary,
+                        onTap: () => _changeVoice(VoiceType.male),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _VoiceButton(
+                        emoji: '👩',
+                        label: '여성',
+                        isSelected: _selectedVoice == VoiceType.female,
+                        color: AppColors.secondary,
+                        onTap: () => _changeVoice(VoiceType.female),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── 속도 조절 ──────────────────────
+                Row(
+                  children: [
+                    const Text(
+                      '🐢',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    Expanded(
+                      child: Slider(
+                        value: _speed,
+                        min: 0.5,
+                        max: 2.0,
+                        divisions: 6,
+                        activeColor: _selectedVoice == VoiceType.male
+                            ? AppColors.primary
+                            : AppColors.secondary,
+                        label: '${_speed}x',
+                        onChanged: (v) => setState(() => _speed = v),
+                      ),
+                    ),
+                    const Text(
+                      '🐇',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_speed}x',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── 재생 컨트롤 ────────────────────
+                Row(
+                  children: [
+                    // 재생 / 일시정지 / 재개 버튼
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading
+                            ? null
+                            : (isActive ? _pauseOrResume : _playAudio),
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                isActive
+                                    ? ((_ttsService?.isPaused ?? false) ? '▶️' : '⏸️')
+                                    : '▶️',
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                        label: Text(
+                          _isLoading
+                              ? '로딩 중...'
+                              : (isActive
+                                  ? ((_ttsService?.isPaused ?? false) ? '재개' : '일시정지')
+                                  : '재생'),
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedVoice == VoiceType.male
+                              ? AppColors.primary
+                              : AppColors.secondary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // 정지 버튼 (Row 안 비-Expanded → minimumSize 명시 필수)
+                    ElevatedButton(
+                      onPressed: isActive ? _stopAudio : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade400,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(52, 52),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '⏹️',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── 요약 텍스트 ────────────────────────────
           Text(
-            sermon.summary,
+            widget.sermon.summary,
             style: const TextStyle(
               fontSize: 16,
               color: AppColors.textPrimary,
@@ -207,6 +464,56 @@ class _SummaryTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── 음성 선택 버튼 위젯 ────────────────────────────────
+class _VoiceButton extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _VoiceButton({
+    required this.emoji,
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 4),
+            Text(
+              '$label 음성',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

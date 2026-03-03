@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- audioplayers: AudioManager.isSpeakerphoneOn setter requires this on Android 12+ -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <application
         android:label="chimshin_bible_note"
         android:name="${applicationName}"
