@@ -22,7 +22,7 @@ class AuthService {
       final data = doc.data()!;
       if (data['isActive'] != true) return null;
 
-      return data;
+      return {'code': code, ...data};
     } catch (e) {
       throw Exception('교회 코드 확인 중 오류가 발생했습니다');
     }
@@ -45,6 +45,13 @@ class AuthService {
       // SDK 내부 오류가 발생했지만 실제로 로그인 된 경우 처리
       final current = _auth.currentUser;
       if (current != null) return current;
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('invalid-credential') || msg.contains('wrong-password') || msg.contains('user-not-found')) {
+        throw Exception('이메일 또는 비밀번호가 올바르지 않습니다');
+      }
+      if (msg.contains('network') || msg.contains('connection') || msg.contains('unavailable') || msg.contains('hostname')) {
+        throw Exception('인터넷 연결을 확인해주세요');
+      }
       throw Exception('로그인 중 오류가 발생했습니다');
     }
   }

@@ -11,7 +11,11 @@ import '../auth/login_screen.dart';
 import '../sermon/sermon_list_screen.dart';
 import '../sermon/sermon_detail_screen.dart';
 import '../saved/saved_sermons_screen.dart';
+import '../devotion/devotionals_screen.dart';
+import '../prayer/prayer_requests_screen.dart';
 import '../../../data/services/saved_sermon_service.dart';
+import '../../../data/services/prayer_service.dart';
+import '../../../data/models/prayer_request_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,16 +29,19 @@ class _HomeScreenState extends State<HomeScreen> {
   final SermonService _sermonService = SermonService();
   final ProgressService _progressService = ProgressService();
   final _savedService = SavedSermonService();
+  final _prayerService = PrayerService();
   String _churchName = '';
   SermonModel? _latestSermon;
   UserProgressModel? _latestProgress;
   List<SermonModel> _savedSermons = [];
   bool _isLoading = true;
   String? _churchCode;
+  String? _uid;
 
   @override
   void initState() {
     super.initState();
+    _uid = FirebaseAuth.instance.currentUser?.uid;
     _loadData();
     SavedSermonService.changeNotifier.addListener(_onSavedChange);
   }
@@ -168,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            SermonDetailScreen(sermon: _latestSermon!),
+                            DevotionalsScreen(sermon: _latestSermon!),
                       ),
                     ).then((_) { if (mounted) _loadData(); });
                   },
@@ -194,6 +201,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
+              if (_uid != null)
+                _PrayerSection(
+                  uid: _uid!,
+                  prayerService: _prayerService,
+                  onManage: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PrayerRequestsScreen()),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
               _QuickMenu(
                 onSermonListTap: () {
                   Navigator.push(
@@ -208,10 +228,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SermonDetailScreen(
-                              sermon: _latestSermon!,
-                              initialTabIndex: 2,
-                            ),
+                            builder: (context) =>
+                                DevotionalsScreen(sermon: _latestSermon!),
                           ),
                         ).then((_) { if (mounted) _loadData(); });
                       }
@@ -856,6 +874,206 @@ class _QuickMenuItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// --- 나의 기도제목 섹션 ---
+class _PrayerSection extends StatelessWidget {
+  final String uid;
+  final PrayerService prayerService;
+  final VoidCallback onManage;
+
+  const _PrayerSection({
+    required this.uid,
+    required this.prayerService,
+    required this.onManage,
+  });
+
+  Color _categoryColor(String category) {
+    switch (category) {
+      case '가족': return Colors.orange.shade300;
+      case '직장': return Colors.blue.shade300;
+      case '건강': return Colors.red.shade300;
+      case '교회': return Colors.green.shade300;
+      case '개인': return Colors.purple.shade300;
+      default:    return Colors.grey.shade400;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              '나의 기도제목',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: onManage,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '관리하기',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        StreamBuilder<List<PrayerRequestModel>>(
+          stream: prayerService.prayerStream(uid),
+          builder: (context, snapshot) {
+            final prayers = snapshot.data ?? [];
+            final sorted = List.of(prayers)
+              ..sort((a, b) {
+                if (a.isAnswered == b.isAnswered) return 0;
+                return a.isAnswered ? 1 : -1;
+              });
+            final display = sorted.take(3).toList();
+
+            return Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: AppColors.secondary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: display.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          const Text('🙏', style: TextStyle(fontSize: 28)),
+                          const SizedBox(width: 12),
+                          Text(
+                            '기도제목을 추가해보세요',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ...display.asMap().entries.map((e) {
+                          final idx = e.key;
+                          final prayer = e.value;
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 9, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: _categoryColor(prayer.category),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        prayer.category,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        prayer.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                          decoration: prayer.isAnswered
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    if (prayer.isAnswered)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade100,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          '응답',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green.shade700,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (idx < display.length - 1)
+                                Divider(
+                                    height: 1,
+                                    indent: 14,
+                                    endIndent: 14,
+                                    color: Colors.grey.withValues(alpha: 0.1)),
+                            ],
+                          );
+                        }),
+                        if (prayers.length > 3) ...[
+                          Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
+                          InkWell(
+                            onTap: onManage,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: Text(
+                                  '전체 보기 >',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
