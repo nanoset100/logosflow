@@ -4,15 +4,27 @@ import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/tts_service.dart';
 import '../../../data/services/saved_sermon_service.dart';
+import '../../../data/services/activity_service.dart';
 
 
-class SermonDetailScreen extends StatelessWidget {
+class SermonDetailScreen extends StatefulWidget {
   final SermonModel sermon;
 
   const SermonDetailScreen({
     super.key,
     required this.sermon,
   });
+
+  @override
+  State<SermonDetailScreen> createState() => _SermonDetailScreenState();
+}
+
+class _SermonDetailScreenState extends State<SermonDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ActivityService().recordActivity('sermon');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +58,7 @@ class SermonDetailScreen extends StatelessWidget {
                     const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text(
-                      '${sermon.formattedDate} (${sermon.dayOfWeek})',
+                      '${widget.sermon.formattedDate} (${widget.sermon.dayOfWeek})',
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.primary,
@@ -57,7 +69,7 @@ class SermonDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  sermon.title,
+                  widget.sermon.title,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -71,7 +83,7 @@ class SermonDetailScreen extends StatelessWidget {
                     const Icon(Icons.menu_book, size: 18, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(
-                      sermon.bibleVerse,
+                      widget.sermon.bibleVerse,
                       style: const TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
@@ -86,7 +98,7 @@ class SermonDetailScreen extends StatelessWidget {
                     const Icon(Icons.person, size: 18, color: AppColors.textHint),
                     const SizedBox(width: 8),
                     Text(
-                      sermon.pastor,
+                      widget.sermon.pastor,
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textHint,
@@ -100,7 +112,7 @@ class SermonDetailScreen extends StatelessWidget {
 
           // 본문 (요약 + 오디오 + 저장)
           Expanded(
-            child: _SummaryTab(sermon: sermon),
+            child: _SummaryTab(sermon: widget.sermon),
           ),
         ],
       ),

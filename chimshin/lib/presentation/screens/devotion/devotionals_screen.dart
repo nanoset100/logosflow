@@ -4,6 +4,7 @@ import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/models/user_progress_model.dart';
 import '../../../data/services/progress_service.dart';
+import '../../../data/services/activity_service.dart';
 
 class DevotionalsScreen extends StatefulWidget {
   final SermonModel sermon;
@@ -243,6 +244,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
         dayKey: dayKey,
         completed: newValue,
       );
+      if (newValue) await ActivityService().recordActivity('devotion');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

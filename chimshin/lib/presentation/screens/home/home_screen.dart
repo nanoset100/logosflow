@@ -18,6 +18,7 @@ import '../../../data/services/prayer_service.dart';
 import '../../../data/models/prayer_request_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/daily_bible_data.dart';
+import '../../../data/services/activity_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,7 +33,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final ProgressService _progressService = ProgressService();
   final _savedService = SavedSermonService();
   final _prayerService = PrayerService();
+  final _activityService = ActivityService();
   String _churchName = '';
+  int _weeklySermon = 0;
+  int _weeklyDevotion = 0;
+  int _weeklyBible = 0;
+  int _streak = 0;
   SermonModel? _latestSermon;
   UserProgressModel? _latestProgress;
   List<SermonModel> _savedSermons = [];
@@ -45,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _uid = FirebaseAuth.instance.currentUser?.uid;
     _loadData();
+    _loadActivityStats();
     SavedSermonService.changeNotifier.addListener(_onSavedChange);
   }
 
@@ -91,6 +98,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadSavedSermons() async {
     final saved = await _savedService.getSavedSermons();
     if (mounted) setState(() => _savedSermons = saved);
+  }
+
+  Future<void> _loadActivityStats() async {
+    final sermon = await _activityService.getWeeklyCount('sermon');
+    final devotion = await _activityService.getWeeklyCount('devotion');
+    final bible = await _activityService.getWeeklyCount('bible');
+    final streak = await _activityService.updateAndGetStreak();
+    if (mounted) {
+      setState(() {
+        _weeklySermon = sermon;
+        _weeklyDevotion = devotion;
+        _weeklyBible = bible;
+        _streak = streak;
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -206,6 +228,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) => const PrayerRequestsScreen()),
                   ),
                 ),
+
+              const SizedBox(height: 20),
+
+              // 6. 이번 주 활동 (동기부여)
+              _WeeklyActivityCard(
+                sermonDays: _weeklySermon,
+                devotionDays: _weeklyDevotion,
+                bibleDays: _weeklyBible,
+                streak: _streak,
+              ),
 
               const SizedBox(height: 20),
 
@@ -1103,6 +1135,7 @@ class _DailyBibleCard extends StatelessWidget {
       'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible';
 
   Future<void> _openBibleApp() async {
+    await ActivityService().recordActivity('bible');
     final appUri = Uri.parse('android-app://$_bibleAppPackage');
     final storeUri = Uri.parse(_bibleAppStore);
     try {
@@ -1279,6 +1312,113 @@ class _RepresentPrayerPromo extends StatelessWidget {
                 size: 14, color: Colors.green.shade400),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── 이번 주 활동 카드 ──────────────────────────────
+class _WeeklyActivityCard extends StatelessWidget {
+  final int sermonDays;
+  final int devotionDays;
+  final int bibleDays;
+  final int streak;
+
+  const _WeeklyActivityCard({
+    required this.sermonDays,
+    required this.devotionDays,
+    required this.bibleDays,
+    required this.streak,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '이번 주 활동',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.12)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _ActivityStat(emoji: '⛪', label: '예배', days: sermonDays),
+                _Divider(),
+                _ActivityStat(emoji: '💭', label: '묵상', days: devotionDays),
+                _Divider(),
+                _ActivityStat(emoji: '📚', label: '성경', days: bibleDays),
+                _Divider(),
+                _ActivityStat(emoji: '🔥', label: '연속', days: streak),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActivityStat extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final int days;
+
+  const _ActivityStat({
+    required this.emoji,
+    required this.label,
+    required this.days,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 28)),
+        const SizedBox(height: 6),
+        Text(
+          '$days일',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 60,
+      child: VerticalDivider(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        thickness: 1,
+        width: 1,
       ),
     );
   }
