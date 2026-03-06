@@ -16,6 +16,8 @@ import '../prayer/prayer_requests_screen.dart';
 import '../../../data/services/saved_sermon_service.dart';
 import '../../../data/services/prayer_service.dart';
 import '../../../data/models/prayer_request_model.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../data/daily_bible_data.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -147,6 +149,10 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _WelcomeCard(churchName: _churchName),
+
+              const SizedBox(height: 20),
+
+              const _DailyBibleCard(),
 
               const SizedBox(height: 20),
 
@@ -1073,7 +1079,200 @@ class _PrayerSection extends StatelessWidget {
             );
           },
         ),
+
+        const SizedBox(height: 12),
+        const _RepresentPrayerPromo(),
       ],
+    );
+  }
+}
+
+// ─── 오늘의 성경 카드 ───────────────────────────────
+class _DailyBibleCard extends StatelessWidget {
+  const _DailyBibleCard();
+
+  static const _bibleAppPackage = 'com.bible_app.king_beginner_bible';
+  static const _bibleAppStore =
+      'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible';
+
+  Future<void> _openBibleApp() async {
+    final appUri = Uri.parse('android-app://$_bibleAppPackage');
+    final storeUri = Uri.parse(_bibleAppStore);
+    try {
+      if (await canLaunchUrl(appUri)) {
+        await launchUrl(appUri);
+      } else {
+        await launchUrl(storeUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      await launchUrl(storeUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DailyBibleData.getToday();
+    final book = today['book'] as String;
+    final chapter = today['chapter'] as int;
+    final progress = DailyBibleData.getTodayProgress();
+
+    final now = DateTime.now();
+    final dateStr = '${now.month}월 ${now.day}일';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '오늘의 성경',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: const Color(0xFFB8860B).withValues(alpha: 0.25)),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFFDF0), Color(0xFFFFF8E1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text('📖', style: TextStyle(fontSize: 22)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$book $chapter장',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF5D4037),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF8D6E63),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: const Color(0xFFD7CCC8),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFB8860B)),
+                    minHeight: 5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '신약 연간 읽기 ${(progress * 100).toStringAsFixed(0)}% 완료',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF8D6E63),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _openBibleApp,
+                    icon: const Icon(Icons.menu_book, size: 18),
+                    label: const Text('왕초보 성경통독으로 읽기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB8860B),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── 대표기도 앱 교차 홍보 배너 ─────────────────────
+class _RepresentPrayerPromo extends StatelessWidget {
+  const _RepresentPrayerPromo();
+
+  static const _storeUrl =
+      'https://play.google.com/store/apps/details?id=com.nanoset.repre_prayer_app';
+
+  Future<void> _openStore() async {
+    final uri = Uri.parse(_storeUrl);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _openStore,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.green.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade100),
+        ),
+        child: Row(
+          children: [
+            const Text('🙏', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '더 많은 대표기도문이 필요하신가요?',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '대표기도 앱 · 상황별 기도문 모음',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF66BB6A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 14, color: Colors.green.shade400),
+          ],
+        ),
+      ),
     );
   }
 }
