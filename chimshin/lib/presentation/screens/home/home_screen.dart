@@ -148,14 +148,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. 환영 인사
               _WelcomeCard(churchName: _churchName),
 
               const SizedBox(height: 20),
 
-              const _DailyBibleCard(),
-
-              const SizedBox(height: 20),
-
+              // 2. 이번 주 설교 (핵심 콘텐츠 1)
               if (_latestSermon != null) ...[
                 _LatestSermonCard(
                   sermon: _latestSermon!,
@@ -172,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 20),
 
+                // 3. 오늘의 묵상 (핵심 콘텐츠 2)
                 _TodayDevotionCard(
                   dayName: _getTodayDayName(),
                   devotion: _getTodayDevotion(),
@@ -191,6 +190,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
+              // 4. 오늘의 성경 (실천 콘텐츠 1)
+              const _DailyBibleCard(),
+
+              const SizedBox(height: 20),
+
+              // 5. 나의 기도제목 (실천 콘텐츠 2)
+              if (_uid != null)
+                _PrayerSection(
+                  uid: _uid!,
+                  prayerService: _prayerService,
+                  onManage: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PrayerRequestsScreen()),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // 7. 저장한 설교 (보관함)
               _SavedSermonsSection(
                 savedSermons: _savedSermons,
                 onViewAll: () => Navigator.push(
@@ -207,19 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              if (_uid != null)
-                _PrayerSection(
-                  uid: _uid!,
-                  prayerService: _prayerService,
-                  onManage: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const PrayerRequestsScreen()),
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
+              // 8. 주요 기능 퀵메뉴
               _QuickMenu(
                 onSermonListTap: () {
                   Navigator.push(
