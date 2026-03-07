@@ -440,10 +440,13 @@ class _LatestSermonCard extends StatelessWidget {
                       const Icon(Icons.menu_book,
                           size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
-                      Text(
-                        sermon.bibleVerse,
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary),
+                      Flexible(
+                        child: Text(
+                          sermon.bibleVerse,
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.textSecondary),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
