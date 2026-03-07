@@ -4,6 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WhisperService {
+  static String _extractDetail(String body, int statusCode) {
+    try {
+      final err = jsonDecode(body) as Map<String, dynamic>;
+      return err['detail'] as String? ?? 'STT 서버 오류 $statusCode';
+    } catch (_) {
+      return 'STT 서버 오류 $statusCode';
+    }
+  }
+
   static String get _baseUrl =>
       dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
 
@@ -18,8 +27,7 @@ class WhisperService {
     final body = await streamed.stream.bytesToString();
 
     if (streamed.statusCode != 200) {
-      final err = jsonDecode(body);
-      throw Exception(err['detail'] ?? 'STT 서버 오류 ${streamed.statusCode}');
+      throw Exception(_extractDetail(body, streamed.statusCode));
     }
 
     final data = jsonDecode(body) as Map<String, dynamic>;
@@ -37,8 +45,7 @@ class WhisperService {
     final body = utf8.decode(response.bodyBytes);
 
     if (response.statusCode != 200) {
-      final err = jsonDecode(body);
-      throw Exception(err['detail'] ?? 'STT 서버 오류 ${response.statusCode}');
+      throw Exception(_extractDetail(body, response.statusCode));
     }
 
     final data = jsonDecode(body) as Map<String, dynamic>;

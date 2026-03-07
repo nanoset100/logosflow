@@ -163,8 +163,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
   // ── 오디오 파일 선택 ──
   Future<void> _pickAudioFile() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'mp4', 'm4a', 'wav', 'webm', 'ogg', 'flac'],
+      type: FileType.audio,
     );
     if (result != null && result.files.single.path != null) {
       setState(() => _pickedAudioFile = File(result.files.single.path!));
