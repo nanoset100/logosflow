@@ -19,7 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_openai_key = os.getenv("OPENAI_API_KEY")
+if not _openai_key:
+    raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다")
+client = AsyncOpenAI(api_key=_openai_key)
 
 MAX_WHISPER_BYTES = 24 * 1024 * 1024  # 24MB (안전 마진)
 
