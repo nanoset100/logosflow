@@ -1,12 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/sermon_service.dart';
 import '../../../data/services/ai_sermon_service.dart';
 import '../../../data/services/youtube_service.dart';
+import '../../../data/services/whisper_service.dart';
 
-enum _InputMethod { direct, text, youtube }
+enum _InputMethod { direct, text, youtube, audio }
 
 class SermonRegisterScreen extends StatefulWidget {
   const SermonRegisterScreen({super.key});
@@ -43,6 +46,8 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
   bool _isAiLoading = false;
   final _aiService = AiSermonService();
   final _youtubeService = YoutubeService();
+  final _whisperService = WhisperService();
+  File? _pickedAudioFile;
   String? _churchCode;
 
   @override
@@ -155,6 +160,37 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     }
   }
 
+  // ── 오디오 파일 선택 ──
+  Future<void> _pickAudioFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'mp4', 'm4a', 'wav', 'webm', 'ogg', 'flac'],
+    );
+    if (result != null && result.files.single.path != null) {
+      setState(() => _pickedAudioFile = File(result.files.single.path!));
+    }
+  }
+
+  // ── 오디오 파일 → Whisper STT → AI 분석 ──
+  Future<void> _runAiFromAudio() async {
+    if (_pickedAudioFile == null) {
+      _showSnack('오디오 파일을 먼저 선택해주세요');
+      return;
+    }
+    setState(() => _isAiLoading = true);
+    try {
+      _showSnack('음성 인식 중... (파일 크기에 따라 수 분이 걸릴 수 있습니다)');
+      final transcript = await _whisperService.transcribeFile(_pickedAudioFile!);
+      if (!mounted) return;
+      _showSnack('음성 인식 완료. AI 분석 중...');
+      await _runAi(transcript);
+    } catch (e) {
+      if (mounted) _showSnack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isAiLoading = false);
+    }
+  }
+
   // ── YouTube URL → 자막 추출 → AI 분석 ──
   Future<void> _runAiFromYoutube() async {
     final url = _youtubeCtrl.text.trim();
@@ -219,6 +255,19 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
                 const SizedBox(height: 24),
               ],
 
+              // ── 오디오 파일 전용 영역 ──
+              if (_method == _InputMethod.audio) ...[
+                _sectionTitle('오디오 파일'),
+                const SizedBox(height: 8),
+                _audioFilePicker(),
+                const SizedBox(height: 8),
+                _aiButton(
+                  label: 'AI 자동 생성 (음성 인식)',
+                  onPressed: _isAiLoading ? null : _runAiFromAudio,
+                ),
+                const SizedBox(height: 24),
+              ],
+
               // ── YouTube URL 전용 영역 ──
               if (_method == _InputMethod.youtube) ...[
                 _sectionTitle('YouTube URL'),
@@ -278,8 +327,8 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
 
   // ── 입력 방법 선택 위젯 ──
   Widget _methodSelector() {
-    const labels = ['직접 입력', '텍스트 붙여넣기', 'YouTube URL'];
-    const icons = [Icons.edit_note, Icons.content_paste, Icons.play_circle_outline];
+    const labels = ['직접 입력', '텍스트 붙여넣기', 'YouTube URL', '오디오 파일'];
+    const icons = [Icons.edit_note, Icons.content_paste, Icons.play_circle_outline, Icons.mic];
     return Row(
       children: _InputMethod.values.asMap().entries.map((entry) {
         final idx = entry.key;
@@ -287,7 +336,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
         final selected = _method == m;
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: idx < 2 ? 8 : 0),
+            padding: EdgeInsets.only(right: idx < 3 ? 8 : 0),
             child: GestureDetector(
               onTap: () => setState(() => _method = m),
               child: AnimatedContainer(
@@ -359,6 +408,52 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
             ),
             const Spacer(),
             const Text('변경', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _audioFilePicker() {
+    final name = _pickedAudioFile?.path.split('/').last.split('\\').last;
+    return GestureDetector(
+      onTap: _isAiLoading ? null : _pickAudioFile,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: name != null ? AppColors.primary : const Color(0xFFE0E0E0),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              name != null ? Icons.audio_file : Icons.upload_file,
+              size: 20,
+              color: name != null ? AppColors.primary : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                name ?? 'mp3, m4a, wav, mp4 파일을 선택하세요',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: name != null ? AppColors.textPrimary : AppColors.textHint,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              name != null ? '변경' : '선택',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
