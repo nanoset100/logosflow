@@ -19,6 +19,8 @@ import '../../../data/models/prayer_request_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/daily_bible_data.dart';
 import '../../../data/services/activity_service.dart';
+import '../../../data/services/admin_service.dart';
+import '../admin/sermon_register_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   UserProgressModel? _latestProgress;
   List<SermonModel> _savedSermons = [];
   bool _isLoading = true;
+  bool _isAdmin = false;
   String? _churchCode;
   String? _uid;
 
@@ -78,12 +81,14 @@ class _HomeScreenState extends State<HomeScreen> {
             progress = await _progressService.getProgress(userId, sermon.id);
           }
         }
+        final adminResult = await AdminService().isAdmin(code);
         if (mounted) {
           setState(() {
             _churchCode = code;
             _churchName = churchData?['name'] as String? ?? '';
             _latestSermon = sermon;
             _latestProgress = progress;
+            _isAdmin = adminResult;
           });
         }
       }
@@ -286,6 +291,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      floatingActionButton: _isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const SermonRegisterScreen()),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('설교 등록'),
+              backgroundColor: AppColors.primary,
+            )
+          : null,
     );
   }
 }
