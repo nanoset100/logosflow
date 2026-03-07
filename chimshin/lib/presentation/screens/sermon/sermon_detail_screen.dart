@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/tts_service.dart';
@@ -20,6 +22,21 @@ class SermonDetailScreen extends StatefulWidget {
 }
 
 class _SermonDetailScreenState extends State<SermonDetailScreen> {
+  void _shareSermon(SermonModel sermon) {
+    final preview = sermon.summary.length > 150
+        ? '${sermon.summary.substring(0, 150)}...'
+        : sermon.summary;
+
+    final text = '''📖 ${sermon.title} - ${sermon.pastor} 목사님
+
+$preview
+
+👉 더 깊은 내용과 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!
+https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
+
+    Share.share(text, subject: '${sermon.title} - ${sermon.pastor} 목사님 설교');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +52,13 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: '공유하기',
+            onPressed: () => _shareSermon(widget.sermon),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -468,7 +492,7 @@ class _SummaryTabState extends State<_SummaryTab> {
               ),
             ),
 
-          // ── 요약 텍스트 ────────────────────────────
+          // ── 요약 텍스트 (마크다운) ─────────────────
           const Text(
             '설교 요약',
             style: TextStyle(
@@ -478,12 +502,29 @@ class _SummaryTabState extends State<_SummaryTab> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            widget.sermon.summary,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-              height: 1.6,
+          MarkdownBody(
+            data: widget.sermon.summary,
+            styleSheet: MarkdownStyleSheet(
+              p: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textPrimary,
+                height: 1.7,
+              ),
+              strong: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              h3: const TextStyle(
+                fontSize: 17,
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                height: 2.0,
+              ),
+              listBullet: const TextStyle(
+                fontSize: 16,
+                color: AppColors.primary,
+              ),
             ),
           ),
 
@@ -513,7 +554,7 @@ class _SummaryTabState extends State<_SummaryTab> {
                 : OutlinedButton.icon(
                     onPressed: _saveLoading ? null : _toggleSave,
                     icon: _saveLoading
-                        ? SizedBox(
+                        ? const SizedBox(
                             width: 18, height: 18,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: AppColors.primary))
