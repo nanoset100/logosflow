@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/sermon_service.dart';
+import '../../../data/services/ai_sermon_service.dart';
+import '../../../data/services/youtube_service.dart';
 
 enum _InputMethod { direct, text, youtube }
 
@@ -38,6 +40,9 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
   final _youtubeCtrl = TextEditingController();
 
   bool _isSaving = false;
+  bool _isAiLoading = false;
+  final _aiService = AiSermonService();
+  final _youtubeService = YoutubeService();
   String? _churchCode;
 
   @override
@@ -64,6 +69,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     _day5Ctrl.dispose();
     _pasteCtrl.dispose();
     _youtubeCtrl.dispose();
+    _youtubeService.dispose();
     super.dispose();
   }
 
@@ -124,6 +130,52 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  // ── AI 분석 공통 로직 (요약 + 5일 묵상 자동 채우기) ──
+  Future<void> _runAi(String text) async {
+    if (text.trim().isEmpty) {
+      _showSnack('분석할 텍스트를 먼저 입력해주세요');
+      return;
+    }
+    setState(() => _isAiLoading = true);
+    try {
+      final result = await _aiService.analyze(text);
+      setState(() {
+        _summaryCtrl.text = result.summary;
+        _day1Ctrl.text = result.devotionals['day1'] ?? '';
+        _day2Ctrl.text = result.devotionals['day2'] ?? '';
+        _day3Ctrl.text = result.devotionals['day3'] ?? '';
+        _day4Ctrl.text = result.devotionals['day4'] ?? '';
+        _day5Ctrl.text = result.devotionals['day5'] ?? '';
+      });
+      _showSnack('AI 분석 완료! 내용을 검토한 후 저장하세요');
+    } catch (e) {
+      _showSnack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isAiLoading = false);
+    }
+  }
+
+  // ── YouTube URL → 자막 추출 → AI 분석 ──
+  Future<void> _runAiFromYoutube() async {
+    final url = _youtubeCtrl.text.trim();
+    if (url.isEmpty) {
+      _showSnack('YouTube URL을 먼저 입력해주세요');
+      return;
+    }
+    setState(() => _isAiLoading = true);
+    try {
+      _showSnack('YouTube 자막 추출 중...');
+      final transcript = await _youtubeService.getTranscript(url);
+      if (!mounted) return;
+      _showSnack('자막 추출 완료. AI 분석 중...');
+      await _runAi(transcript);
+    } catch (e) {
+      if (mounted) _showSnack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isAiLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,7 +212,10 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
                 const SizedBox(height: 8),
                 _multilineField(_pasteCtrl, '설교 전문 텍스트를 여기에 붙여넣으세요...', lines: 8),
                 const SizedBox(height: 8),
-                _aiComingSoonButton('AI 자동 요약 생성'),
+                _aiButton(
+                  label: 'AI 자동 요약 생성',
+                  onPressed: _isAiLoading ? null : () => _runAi(_pasteCtrl.text),
+                ),
                 const SizedBox(height: 24),
               ],
 
@@ -170,7 +225,10 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
                 const SizedBox(height: 8),
                 _textField(_youtubeCtrl, 'https://www.youtube.com/watch?v=...'),
                 const SizedBox(height: 8),
-                _aiComingSoonButton('AI 자동 생성'),
+                _aiButton(
+                  label: 'AI 자동 생성',
+                  onPressed: _isAiLoading ? null : _runAiFromYoutube,
+                ),
                 const SizedBox(height: 24),
               ],
 
@@ -307,29 +365,26 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     );
   }
 
-  Widget _aiComingSoonButton(String label) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+  Widget _aiButton({required String label, VoidCallback? onPressed}) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: _isAiLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            )
+          : const Icon(Icons.auto_awesome, size: 16),
+      label: Text(
+        _isAiLoading ? 'AI 분석 중...' : label,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.auto_awesome, size: 16, color: AppColors.textHint),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textHint, fontWeight: FontWeight.w500)),
-              const Text('Phase 2에서 지원 예정 - 아래 필드에 직접 입력하세요',
-                  style: TextStyle(fontSize: 10, color: AppColors.textHint)),
-            ],
-          ),
-        ],
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: const Color(0xFFB0BEC5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
