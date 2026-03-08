@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/notice_model.dart';
 import '../../../data/services/notice_service.dart';
+import '../../../data/services/admin_service.dart';
 import 'notice_detail_screen.dart';
+import 'notice_write_screen.dart';
 
 class NoticeScreen extends StatefulWidget {
   final String churchCode;
@@ -22,17 +25,54 @@ class _NoticeScreenState extends State<NoticeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _service = NoticeService();
+  final _adminService = AdminService();
+
+  bool _isAdmin = false;
+  int _currentTab = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging ||
+          _tabController.index != _currentTab) {
+        setState(() => _currentTab = _tabController.index);
+      }
+    });
+    _checkAdmin();
+  }
+
+  Future<void> _checkAdmin() async {
+    final result = await _adminService.isAdmin(widget.churchCode);
+    if (mounted) setState(() => _isAdmin = result);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  String get _authorName {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.displayName ?? user?.email?.split('@').first ?? '담임목사';
+  }
+
+  Future<void> _openWriteScreen() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NoticeWriteScreen(
+          churchCode: widget.churchCode,
+          churchName: widget.churchName,
+          authorName: _authorName,
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      setState(() {}); // 로컬 공지 리스트 갱신
+    }
   }
 
   @override
@@ -73,12 +113,26 @@ class _NoticeScreenState extends State<NoticeScreen>
             accentColor: const Color(0xFF1565C0),
           ),
           _NoticeList(
-            notices: NoticeService.dummyChurchNotices(widget.churchName),
+            notices: NoticeService.getLocalChurchNotices(widget.churchName),
             emptyMessage: '등록된 교회 소식이 없습니다',
             accentColor: AppColors.primary,
           ),
         ],
       ),
+      // FAB: 우리 교회 소식 탭 + 관리자일 때만 표시
+      floatingActionButton: (_currentTab == 1 && _isAdmin)
+          ? FloatingActionButton.extended(
+              onPressed: _openWriteScreen,
+              backgroundColor: const Color(0xFF1565C0),
+              foregroundColor: Colors.white,
+              elevation: 3,
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text(
+                '공지 작성',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            )
+          : null,
     );
   }
 }
