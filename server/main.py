@@ -9,6 +9,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# yt-dlp 자동 업데이트 (YouTube API 변경 대응)
+try:
+    import subprocess as _sp
+    _sp.run(["yt-dlp", "-U"], capture_output=True, timeout=30)
+except Exception:
+    pass
+
 _openai_key = os.getenv("OPENAI_API_KEY")
 if not _openai_key:
     raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다")
