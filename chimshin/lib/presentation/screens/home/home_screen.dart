@@ -13,6 +13,7 @@ import '../sermon/sermon_detail_screen.dart';
 import '../saved/saved_sermons_screen.dart';
 import '../devotion/devotionals_screen.dart';
 import '../devotion/group_devotion_screen.dart';
+import '../notice/notice_screen.dart';
 import '../prayer/prayer_requests_screen.dart';
 import '../../../data/services/saved_sermon_service.dart';
 import '../../../data/services/prayer_service.dart';
@@ -295,17 +296,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                onDevotionTap: _latestSermon != null
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                DevotionalsScreen(sermon: _latestSermon!),
-                          ),
-                        ).then((_) { if (mounted) _refreshAll(); });
-                      }
-                    : null,
+                onNoticeTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NoticeScreen(
+                        churchCode: _churchCode ?? '',
+                        churchName: _churchName,
+                      ),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
@@ -872,11 +873,11 @@ class _SavedSermonsSection extends StatelessWidget {
 // ─── 빠른 메뉴 ──────────────────────────────────────
 class _QuickMenu extends StatelessWidget {
   final VoidCallback onSermonListTap;
-  final VoidCallback? onDevotionTap;
+  final VoidCallback onNoticeTap;
 
   const _QuickMenu({
     required this.onSermonListTap,
-    this.onDevotionTap,
+    required this.onNoticeTap,
   });
 
   @override
@@ -906,10 +907,10 @@ class _QuickMenu extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _QuickMenuItem(
-                icon: Icons.calendar_today,
-                label: '주중 묵상',
-                color: AppColors.secondary,
-                onTap: onDevotionTap ?? () {},
+                icon: Icons.campaign_rounded,
+                label: '침신/교회 소식',
+                color: const Color(0xFF1565C0),
+                onTap: onNoticeTap,
               ),
             ),
           ],
