@@ -12,6 +12,7 @@ import '../sermon/sermon_list_screen.dart';
 import '../sermon/sermon_detail_screen.dart';
 import '../saved/saved_sermons_screen.dart';
 import '../devotion/devotionals_screen.dart';
+import '../devotion/group_devotion_screen.dart';
 import '../prayer/prayer_requests_screen.dart';
 import '../../../data/services/saved_sermon_service.dart';
 import '../../../data/services/prayer_service.dart';
@@ -120,6 +121,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshAll() async {
+    await _loadData();
+    await _loadActivityStats();
+  }
+
   Future<void> _logout() async {
     await _authService.signOut();
     if (mounted) {
@@ -191,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) =>
                             SermonDetailScreen(sermon: _latestSermon!),
                       ),
-                    ).then((_) { if (mounted) _loadData(); });
+                    ).then((_) { if (mounted) _refreshAll(); });
                   },
                 ),
 
@@ -209,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) =>
                             DevotionalsScreen(sermon: _latestSermon!),
                       ),
-                    ).then((_) { if (mounted) _loadData(); });
+                    ).then((_) { if (mounted) _refreshAll(); });
                   },
                 ),
               ] else
@@ -232,6 +238,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     MaterialPageRoute(
                         builder: (context) => const PrayerRequestsScreen()),
                   ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // 5.5 이번 주 구역 예배 교재 (핵심 바이럴 콘텐츠)
+              if (_latestSermon != null)
+                _GroupDevotionSection(
+                  sermon: _latestSermon!,
+                  progress: _latestProgress,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          GroupDevotionScreen(sermon: _latestSermon!),
+                    ),
+                  ).then((_) { if (mounted) _refreshAll(); }),
                 ),
 
               const SizedBox(height: 20),
@@ -281,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (context) =>
                                 DevotionalsScreen(sermon: _latestSermon!),
                           ),
-                        ).then((_) { if (mounted) _loadData(); });
+                        ).then((_) { if (mounted) _refreshAll(); });
                       }
                     : null,
               ),
@@ -1440,6 +1462,179 @@ class _Divider extends StatelessWidget {
         thickness: 1,
         width: 1,
       ),
+    );
+  }
+}
+
+// ─── 이번 주 구역 예배 교재 섹션 ────────────────────
+class _GroupDevotionSection extends StatelessWidget {
+  final SermonModel sermon;
+  final UserProgressModel? progress;
+  final VoidCallback onTap;
+
+  const _GroupDevotionSection({
+    required this.sermon,
+    this.progress,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final completedCount = progress?.completedCount ?? 0;
+    final rawSummary = sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim();
+    final summaryPreview = rawSummary.length > 90
+        ? '${rawSummary.substring(0, 90)}...'
+        : rawSummary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.groups_rounded, size: 22, color: AppColors.textPrimary),
+            const SizedBox(width: 8),
+            const Text(
+              '이번 주 구역 예배 교재',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2E5C8A), Color(0xFF3949AB)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3949AB).withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 배지
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      '5일 묵상 교재',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // 설교 제목
+                  Text(
+                    sermon.title,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${sermon.pastor} 목사님  ·  ${sermon.bibleVerse}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.75),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // 요약 미리보기
+                  Text(
+                    summaryPreview,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.55,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  // 5일 진행 표시
+                  Row(
+                    children: [
+                      ...List.generate(5, (i) => Container(
+                        width: 30,
+                        height: 30,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: i < completedCount
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.22),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${i + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: i < completedCount
+                                ? const Color(0xFF3949AB)
+                                : Colors.white,
+                          ),
+                        ),
+                      )),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$completedCount / 5일 완료',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // CTA 버튼
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      '구역 예배 교재 보러 가기  →',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3949AB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
