@@ -51,6 +51,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/pastors/
     - assets/icons/
     - .env
 

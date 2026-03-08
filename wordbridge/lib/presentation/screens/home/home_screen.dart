@@ -136,7 +136,7 @@ class _WordBridgeHomeBody extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.82,
+                childAspectRatio: 0.85,
                 children:
                     _pastors.map((p) => _PastorCard(pastor: p)).toList(),
               ),
@@ -314,19 +314,12 @@ class _PastorCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            // 아바타: 실제 캐리커처 PNG 또는 이모지 fallback
             Container(
-              width: 52,
-              height: 52,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    pastor.color.withValues(alpha: 0.85),
-                    pastor.color,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -336,33 +329,43 @@ class _PastorCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Center(
-                child: Text(pastor.emoji,
-                    style: const TextStyle(fontSize: 22)),
+              child: ClipOval(
+                child: Image.asset(
+                  pastor.imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          pastor.color.withValues(alpha: 0.85),
+                          pastor.color,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(pastor.emoji,
+                          style: const TextStyle(fontSize: 26)),
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 10),
-            Text(
-              pastor.name,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 3),
+            // 목사님 이름만 (교회명 제거)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
-                pastor.church,
+                pastor.name,
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF9E9E9E),
-                  height: 1.3,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1A1A2E),
+                  letterSpacing: -0.3,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -383,7 +386,7 @@ class _PastorCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -473,11 +476,13 @@ class _PastorData {
   final String church;
   final String emoji;
   final Color color;
+  final String imagePath; // 실제 캐리커처 PNG 경로 (없으면 emoji fallback)
   const _PastorData({
     required this.name,
     required this.church,
     required this.emoji,
     required this.color,
+    required this.imagePath,
   });
 }
 
@@ -487,53 +492,62 @@ const _pastors = [
     church: '분당우리교회',
     emoji: '✝️',
     color: Color(0xFF1565C0),
+    imagePath: 'assets/images/pastors/pastor_lee_chansu.png',
   ),
   _PastorData(
     name: '이재훈 목사',
     church: '온누리교회',
     emoji: '🕊️',
     color: Color(0xFF2E7D32),
+    imagePath: 'assets/images/pastors/pastor_lee_jaehoon.png',
   ),
   _PastorData(
     name: '오정현 목사',
     church: '사랑의교회',
     emoji: '❤️',
     color: Color(0xFFC62828),
+    imagePath: 'assets/images/pastors/pastor_oh_junghyun.png',
   ),
   _PastorData(
     name: '유기성 목사',
     church: '선한목자교회',
     emoji: '🌿',
     color: Color(0xFF00695C),
+    imagePath: 'assets/images/pastors/pastor_yoo_kisung.png',
   ),
   _PastorData(
     name: '진재혁 목사',
     church: '지구촌교회',
     emoji: '🌏',
     color: Color(0xFF4527A0),
+    imagePath: 'assets/images/pastors/pastor_jin_jaehyuk.png',
   ),
   _PastorData(
     name: '김은호 목사',
     church: '오륜교회',
     emoji: '🔥',
     color: Color(0xFFE65100),
+    imagePath: 'assets/images/pastors/pastor_kim_eunho.png',
   ),
   _PastorData(
     name: '김삼환 목사',
     church: '명성교회',
     emoji: '⭐',
     color: Color(0xFFF57F17),
+    imagePath: 'assets/images/pastors/pastor_kim_samhwan.png',
   ),
   _PastorData(
     name: '이영훈 목사',
     church: '여의도순복음',
     emoji: '🌊',
     color: Color(0xFF0277BD),
+    imagePath: 'assets/images/pastors/pastor_lee_younghoon.png',
   ),
   _PastorData(
     name: '소강석 목사',
     church: '새에덴교회',
     emoji: '🌸',
     color: Color(0xFF6A1B9A),
+    imagePath: 'assets/images/pastors/pastor_so_gangseok.png',
   ),
 ];
