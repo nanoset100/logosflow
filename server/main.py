@@ -76,10 +76,21 @@ async def _send_daily_devotion_notification():
         weekdays = ["월", "화", "수", "목", "금", "토", "일"]
         today = weekdays[datetime.now(pytz.timezone("Asia/Seoul")).weekday()]
 
+        daily_messages = {
+            "월": "한 주의 시작, 말씀으로 힘을 얻으세요 💪",
+            "화": "어제 말씀 묵상 하셨나요? 오늘도 함께해요 🙏",
+            "수": "한 주의 중심에서 말씀을 붙드세요 ✝️",
+            "목": "주일 설교 말씀을 다시 되새겨보세요 📖",
+            "금": "이번 주 마지막 묵상, 감사로 마무리해요 🌟",
+            "토": "주일을 준비하는 마음으로 말씀을 묵상해요 🕊️",
+            "일": "예배 후 말씀을 마음에 새겨보세요 ⛪",
+        }
+        body = daily_messages.get(today, "오늘의 묵상 말씀을 확인해보세요 🙏")
+
         message = fcm_messaging.Message(
             notification=fcm_messaging.Notification(
-                title=f"오늘의 말씀 묵상 ({today}요일)",
-                body="오늘의 묵상 말씀을 확인해보세요 🙏",
+                title=f"📖 {today}요일 말씀 묵상",
+                body=body,
             ),
             topic="daily_devotion",
             android=fcm_messaging.AndroidConfig(
