@@ -20,6 +20,10 @@ import '../../../data/services/prayer_service.dart';
 import '../../../data/services/activity_service.dart';
 import '../../../data/services/admin_service.dart';
 import '../admin/sermon_register_screen.dart';
+import '../admin/members_screen.dart';
+import '../../../data/services/member_service.dart';
+import '../../../data/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'widgets/welcome_card.dart';
 import 'widgets/latest_sermon_card.dart';
 import 'widgets/today_devotion_card.dart';
@@ -90,6 +94,25 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
         final adminResult = await AdminService().isAdmin(code);
+        // FCM 토큰을 members 컬렉션에 동기화 (기도 알림 수신용)
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token != null) {
+            await MemberService.syncFcmToken(
+              churchCode: code,
+              uid: uid,
+              fcmToken: token,
+            );
+            // 관리자면 church 문서에도 토큰 저장 (생일 알림 수신용)
+            if (adminResult) {
+              await MemberService.saveAdminToken(
+                churchCode: code,
+                fcmToken: token,
+              );
+            }
+          }
+        }
         if (mounted) {
           setState(() {
             _churchCode = code;
@@ -293,17 +316,33 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: _isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const SermonRegisterScreen()),
-              ),
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('설교 등록',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-              backgroundColor: AppColors.primary,
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'members',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MembersScreen()),
+                  ),
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.people, color: AppColors.primary),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton.extended(
+                  heroTag: 'sermon',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const SermonRegisterScreen()),
+                  ),
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('설교 등록',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w700)),
+                  backgroundColor: AppColors.primary,
+                ),
+              ],
             )
           : null,
     );

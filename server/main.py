@@ -112,6 +112,57 @@ async def _send_daily_devotion_notification():
     except Exception as e:
         print(f"[FCM] 알림 발송 실패: {e}")
 
+async def _send_birthday_notifications():
+    """매일 오전 6:00 KST - 오늘 생일인 교인을 목사님에게 알림"""
+    if not _firebase_initialized:
+        return
+    try:
+        from firebase_admin import firestore as admin_firestore
+        from datetime import datetime
+        db = admin_firestore.client()
+        kst = pytz.timezone("Asia/Seoul")
+        today = datetime.now(kst)
+        month, day = today.month, today.day
+
+        churches = db.collection('churches').stream()
+        count = 0
+        for church in churches:
+            church_data = church.to_dict()
+            admin_tokens = church_data.get('adminFcmTokens', [])
+            if not admin_tokens:
+                continue
+
+            # 오늘 생일인 교인 조회
+            members = (db.collection('churches').document(church.id)
+                       .collection('members')
+                       .where('birthMonth', '==', month)
+                       .where('birthDay', '==', day)
+                       .stream())
+
+            birthday_members = [(m.to_dict().get('name', '?'), m.to_dict().get('role', '성도'))
+                                for m in members]
+            if not birthday_members:
+                continue
+
+            # 목사님 전체에게 알림
+            for token in set(admin_tokens):
+                for name, role in birthday_members:
+                    msg = fcm_messaging.Message(
+                        notification=fcm_messaging.Notification(
+                            title=f"🎂 오늘 교인 생일",
+                            body=f"{name} {role}님이 오늘 생일입니다 🎉",
+                        ),
+                        data={'type': 'birthday', 'memberName': name},
+                        token=token,
+                        android=fcm_messaging.AndroidConfig(priority="high"),
+                    )
+                    fcm_messaging.send(msg)
+                    count += 1
+        print(f"[Birthday] 생일 알림 {count}건 발송 완료 ({month}/{day})")
+    except Exception as e:
+        print(f"[Birthday] 생일 알림 실패: {e}")
+
+
 app = FastAPI(title="Chimshin Whisper Server", version="2.0.0")
 
 app.add_middleware(
@@ -131,8 +182,14 @@ async def startup_event():
         id="daily_devotion",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        _send_birthday_notifications,
+        CronTrigger(hour=6, minute=0, timezone=pytz.timezone("Asia/Seoul")),
+        id="birthday_check",
+        replace_existing=True,
+    )
     _scheduler.start()
-    print("[Scheduler] 매일 07:00 KST 묵상 알림 스케줄러 시작")
+    print("[Scheduler] 매일 07:00 KST 묵상 알림 + 06:00 KST 생일 알림 스케줄러 시작")
 
 
 @app.on_event("shutdown")
