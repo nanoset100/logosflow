@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
+import '../../../data/services/notification_service.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/home_screen.dart';
 
@@ -33,6 +34,8 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = await authFuture;
 
     if (user != null) {
+      // FCM 토큰 저장 (로그인 확인 후)
+      NotificationService.saveToken();
       // 로그인 상태 → 홈으로
       Navigator.pushReplacement(
         context,

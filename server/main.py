@@ -1,8 +1,11 @@
 import os
+import json
 import tempfile
 import asyncio
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import Response
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, OpenAIError
 from dotenv import load_dotenv
@@ -24,7 +27,76 @@ client = AsyncOpenAI(api_key=_openai_key)
 
 MAX_WHISPER_BYTES = 24 * 1024 * 1024  # 24MB
 
-app = FastAPI(title="Chimshin Whisper Server", version="1.0.0")
+# ─── Firebase Admin 초기화 (FCM 푸시 알림용) ──────────────────────────────────
+import firebase_admin
+from firebase_admin import credentials, messaging as fcm_messaging
+
+_firebase_initialized = False
+
+def _init_firebase():
+    global _firebase_initialized
+    if _firebase_initialized:
+        return True
+    service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+    if not service_account_json:
+        print("[FCM] FIREBASE_SERVICE_ACCOUNT 환경변수 없음 - 푸시 알림 비활성화")
+        return False
+    try:
+        cred_dict = json.loads(service_account_json)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        _firebase_initialized = True
+        print("[FCM] Firebase Admin 초기화 완료")
+        return True
+    except Exception as e:
+        print(f"[FCM] Firebase Admin 초기화 실패: {e}")
+        return False
+
+_init_firebase()
+
+# ─── APScheduler: 매일 오전 7시 KST 묵상 알림 ───────────────────────────────
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
+
+_scheduler = AsyncIOScheduler(timezone=pytz.timezone("Asia/Seoul"))
+
+async def _send_daily_devotion_notification():
+    """매일 오전 7:00 KST - daily_devotion 토픽으로 묵상 알림 발송"""
+    if not _firebase_initialized:
+        print("[FCM] Firebase 미초기화 - 알림 발송 건너뜀")
+        return
+    try:
+        from datetime import datetime
+        weekdays = ["월", "화", "수", "목", "금", "토", "일"]
+        today = weekdays[datetime.now(pytz.timezone("Asia/Seoul")).weekday()]
+
+        message = fcm_messaging.Message(
+            notification=fcm_messaging.Notification(
+                title=f"오늘의 말씀 묵상 ({today}요일)",
+                body="오늘의 묵상 말씀을 확인해보세요 🙏",
+            ),
+            topic="daily_devotion",
+            android=fcm_messaging.AndroidConfig(
+                notification=fcm_messaging.AndroidNotification(
+                    icon="ic_launcher",
+                    color="#1A6B3A",
+                    sound="default",
+                ),
+                priority="high",
+            ),
+            apns=fcm_messaging.APNSConfig(
+                payload=fcm_messaging.APNSPayload(
+                    aps=fcm_messaging.Aps(sound="default", badge=1),
+                ),
+            ),
+        )
+        response = fcm_messaging.send(message)
+        print(f"[FCM] 묵상 알림 발송 완료: {response}")
+    except Exception as e:
+        print(f"[FCM] 알림 발송 실패: {e}")
+
+app = FastAPI(title="Chimshin Whisper Server", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,6 +104,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    # 매일 오전 7시 KST 묵상 알림 스케줄러 시작
+    _scheduler.add_job(
+        _send_daily_devotion_notification,
+        CronTrigger(hour=7, minute=0, timezone=pytz.timezone("Asia/Seoul")),
+        id="daily_devotion",
+        replace_existing=True,
+    )
+    _scheduler.start()
+    print("[Scheduler] 매일 07:00 KST 묵상 알림 스케줄러 시작")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    _scheduler.shutdown(wait=False)
 
 
 async def compress_audio(input_path: str, output_path: str) -> None:
@@ -145,6 +235,142 @@ async def transcribe_youtube(
         raise HTTPException(status_code=422, detail="음성을 인식할 수 없습니다.")
 
     return {"text": text, "language": language}
+
+
+class TtsRequest(BaseModel):
+    text: str
+    voice: str = "alloy"  # alloy(남성) | nova(여성)
+
+
+@app.post("/ai/tts")
+async def text_to_speech(req: TtsRequest):
+    allowed_voices = {"alloy", "nova", "echo", "fable", "onyx", "shimmer"}
+    if req.voice not in allowed_voices:
+        raise HTTPException(status_code=400, detail=f"지원하지 않는 음성: {req.voice}")
+    if not req.text.strip():
+        raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다")
+
+    try:
+        response = await client.audio.speech.create(
+            model="tts-1",
+            voice=req.voice,
+            input=req.text,
+        )
+        audio_bytes = response.content
+    except OpenAIError as e:
+        raise HTTPException(status_code=500, detail=f"TTS 오류: {str(e)}")
+
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+class AnalyzeRequest(BaseModel):
+    text: str
+
+
+@app.post("/ai/analyze")
+async def analyze_sermon(req: AnalyzeRequest):
+    if not req.text.strip():
+        raise HTTPException(status_code=400, detail="분석할 텍스트가 없습니다")
+
+    truncated = req.text[:10000] if len(req.text) > 10000 else req.text
+
+    system_prompt = (
+        "당신은 한국 침례교회의 설교 전문 분석가입니다. "
+        "설교 텍스트를 분석하여 성도들의 신앙 성장을 돕는 요약과 5일 묵상을 작성합니다. "
+        "신학적으로 정확하고 평신도가 이해하기 쉬운 언어를 사용하세요. "
+        "반드시 아래 JSON 형식만 반환하고 추가 설명은 쓰지 마세요."
+    )
+
+    user_prompt = f"""다음 설교 텍스트를 분석하여 JSON으로만 응답해주세요:
+
+{truncated}
+
+응답 형식 (JSON만, 한국어로):
+{{
+  "summary": "[전체 요약] 설교의 배경·핵심 주제·주요 논증·결론을 논리적 흐름으로 3~4개의 긴 문단(총 10~15줄)으로 풍성하게 풀어쓸 것. 신학적 깊이와 평신도 이해를 함께 고려. 그 다음 줄을 띄운 후 [핵심 교훈] 제목 아래 설교의 가장 중요한 포인트 3~4가지를 '- 제목\\n내용' 형태의 글머리 기호로 각각 2~3문장씩 상세하게 작성할 것.",
+  "day1": "월요일 - 오늘 말씀에서 깨달은 핵심 진리를 3~4문장으로 풍성하게",
+  "day2": "화요일 - 이 말씀을 내 삶에 적용하는 구체적인 방법을 3~4문장으로",
+  "day3": "수요일 - 이 말씀에 근거한 기도 제목과 기도문을 3~4문장으로",
+  "day4": "목요일 - 이번 주 실천할 구체적인 한 가지 행동을 3~4문장으로",
+  "day5": "금요일 - 구역/셀 모임에서 함께 나눌 핵심 질문과 적용을 3~4문장으로"
+}}"""
+
+    try:
+        completion = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.7,
+            max_tokens=4000,
+            response_format={"type": "json_object"},
+        )
+        content = completion.choices[0].message.content
+        import json
+        result = json.loads(content)
+    except OpenAIError as e:
+        raise HTTPException(status_code=500, detail=f"AI 오류: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"응답 파싱 오류: {str(e)}")
+
+    return result
+
+
+class NotifyTopicRequest(BaseModel):
+    topic: str  # e.g. "daily_devotion"
+    title: str
+    body: str
+    server_key: str  # 서버 호출 인증용 비밀키
+
+
+class NotifyTokenRequest(BaseModel):
+    token: str  # FCM 개별 토큰
+    title: str
+    body: str
+    data: dict = {}
+    server_key: str
+
+
+def _verify_server_key(key: str):
+    expected = os.getenv("NOTIFY_SERVER_KEY")
+    if not expected or key != expected:
+        raise HTTPException(status_code=403, detail="인증 실패")
+
+
+@app.post("/notify/topic")
+async def notify_topic(req: NotifyTopicRequest):
+    """토픽 구독자 전체에게 푸시 알림 발송 (관리자 전용)"""
+    _verify_server_key(req.server_key)
+    if not _firebase_initialized:
+        raise HTTPException(status_code=503, detail="Firebase 초기화 안 됨")
+    try:
+        message = fcm_messaging.Message(
+            notification=fcm_messaging.Notification(title=req.title, body=req.body),
+            topic=req.topic,
+        )
+        response = fcm_messaging.send(message)
+        return {"success": True, "message_id": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/notify/token")
+async def notify_token(req: NotifyTokenRequest):
+    """특정 FCM 토큰으로 개인 알림 발송 (목사님 목양 알림용)"""
+    _verify_server_key(req.server_key)
+    if not _firebase_initialized:
+        raise HTTPException(status_code=503, detail="Firebase 초기화 안 됨")
+    try:
+        message = fcm_messaging.Message(
+            notification=fcm_messaging.Notification(title=req.title, body=req.body),
+            data={k: str(v) for k, v in req.data.items()},
+            token=req.token,
+        )
+        response = fcm_messaging.send(message)
+        return {"success": True, "message_id": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

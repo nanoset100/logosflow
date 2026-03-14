@@ -14,7 +14,8 @@ class TtsService {
   bool _isPaused = false;
   VoiceType _currentVoice = VoiceType.male;
 
-  static String get _apiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
+  static String get _baseUrl =>
+      dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
 
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;
@@ -49,14 +50,10 @@ class TtsService {
     if (_isPlaying) await stop();
 
     final response = await http.post(
-      Uri.parse('https://api.openai.com/v1/audio/speech'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $_apiKey',
-      },
+      Uri.parse('$_baseUrl/ai/tts'),
+      headers: {'Content-Type': 'application/json; charset=utf-8'},
       body: jsonEncode({
-        'model': 'tts-1',
-        'input': text,
+        'text': text,
         'voice': _getVoiceName(_currentVoice),
       }),
     );
@@ -68,7 +65,7 @@ class TtsService {
     } else {
       final error = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(
-          'TTS 오류 ${response.statusCode}: ${error['error']?['message'] ?? '알 수 없는 오류'}');
+          'TTS 오류 ${response.statusCode}: ${error['detail'] ?? '알 수 없는 오류'}');
     }
   }
 

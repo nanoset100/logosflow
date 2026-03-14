@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -97,7 +98,15 @@ class AuthService {
 
   // ─── 로그아웃 ─────────────────────────────────────
   Future<void> signOut() async {
+    final uid = _auth.currentUser?.uid;
     await clearChurchCode();
+    if (uid != null) {
+      try {
+        await _firestore.collection('users').doc(uid).update({'fcmToken': FieldValue.delete()});
+        await FirebaseMessaging.instance.deleteToken();
+        await FirebaseMessaging.instance.unsubscribeFromTopic('daily_devotion');
+      } catch (_) {}
+    }
     await _auth.signOut();
   }
 

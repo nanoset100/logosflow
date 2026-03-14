@@ -17,12 +17,18 @@ import '../notice/notice_screen.dart';
 import '../prayer/prayer_requests_screen.dart';
 import '../../../data/services/saved_sermon_service.dart';
 import '../../../data/services/prayer_service.dart';
-import '../../../data/models/prayer_request_model.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../data/daily_bible_data.dart';
 import '../../../data/services/activity_service.dart';
 import '../../../data/services/admin_service.dart';
 import '../admin/sermon_register_screen.dart';
+import 'widgets/welcome_card.dart';
+import 'widgets/latest_sermon_card.dart';
+import 'widgets/today_devotion_card.dart';
+import 'widgets/daily_bible_card.dart';
+import 'widgets/prayer_section.dart';
+import 'widgets/group_devotion_section.dart';
+import 'widgets/weekly_activity_card.dart';
+import 'widgets/saved_sermons_section.dart';
+import 'widgets/quick_menu.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,24 +38,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _authService = AuthService();
-  final SermonService _sermonService = SermonService();
-  final ProgressService _progressService = ProgressService();
+  final _authService = AuthService();
+  final _sermonService = SermonService();
+  final _progressService = ProgressService();
   final _savedService = SavedSermonService();
   final _prayerService = PrayerService();
   final _activityService = ActivityService();
+
   String _churchName = '';
-  int _weeklySermon = 0;
-  int _weeklyDevotion = 0;
-  int _weeklyBible = 0;
-  int _streak = 0;
+  String? _churchCode;
+  String? _uid;
   SermonModel? _latestSermon;
   UserProgressModel? _latestProgress;
   List<SermonModel> _savedSermons = [];
   bool _isLoading = true;
   bool _isAdmin = false;
-  String? _churchCode;
-  String? _uid;
+  int _weeklySermon = 0;
+  int _weeklyDevotion = 0;
+  int _weeklyBible = 0;
+  int _streak = 0;
 
   @override
   void initState() {
@@ -70,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-
     try {
       final code = await _authService.getSavedChurchCode();
       if (code != null && code.isNotEmpty) {
@@ -94,9 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       }
-    } catch (_) {
-      // 오류 시 빈 상태로 표시
-    }
+    } catch (_) {}
 
     await _loadSavedSermons();
     if (mounted) setState(() => _isLoading = false);
@@ -139,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _getTodayDevotion() {
     if (_latestSermon == null) return '';
-    final weekday = DateTime.now().weekday; // 1(월)~7(일)
+    final weekday = DateTime.now().weekday;
     if (weekday >= 1 && weekday <= 5) {
       return _latestSermon!.devotionals['day$weekday'] ?? '';
     }
@@ -175,83 +179,68 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: _refreshAll,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. 환영 인사
-              _WelcomeCard(churchName: _churchName),
-
+              WelcomeCard(churchName: _churchName),
               const SizedBox(height: 20),
 
-              // 2. 이번 주 설교 (핵심 콘텐츠 1)
               if (_latestSermon != null) ...[
-                _LatestSermonCard(
+                LatestSermonCard(
                   sermon: _latestSermon!,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SermonDetailScreen(sermon: _latestSermon!),
-                      ),
-                    ).then((_) { if (mounted) _refreshAll(); });
-                  },
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SermonDetailScreen(sermon: _latestSermon!),
+                    ),
+                  ).then((_) { if (mounted) _refreshAll(); }),
                 ),
-
                 const SizedBox(height: 20),
-
-                // 3. 오늘의 묵상 (핵심 콘텐츠 2)
-                _TodayDevotionCard(
+                TodayDevotionCard(
                   dayName: _getTodayDayName(),
                   devotion: _getTodayDevotion(),
                   progress: _latestProgress,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DevotionalsScreen(sermon: _latestSermon!),
-                      ),
-                    ).then((_) { if (mounted) _refreshAll(); });
-                  },
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          DevotionalsScreen(sermon: _latestSermon!),
+                    ),
+                  ).then((_) { if (mounted) _refreshAll(); }),
                 ),
               ] else
-                _EmptySermonCard(),
+                const EmptySermonCard(),
 
               const SizedBox(height: 20),
-
-              // 4. 오늘의 성경 (실천 콘텐츠 1)
-              const _DailyBibleCard(),
-
+              const DailyBibleCard(),
               const SizedBox(height: 20),
 
-              // 5. 나의 기도제목 (실천 콘텐츠 2)
               if (_uid != null)
-                _PrayerSection(
+                PrayerSection(
                   uid: _uid!,
                   prayerService: _prayerService,
                   onManage: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const PrayerRequestsScreen()),
+                        builder: (_) => const PrayerRequestsScreen()),
                   ),
                 ),
 
               const SizedBox(height: 20),
 
-              // 5.5 이번 주 구역 예배 교재 (핵심 바이럴 콘텐츠)
               if (_latestSermon != null)
-                _GroupDevotionSection(
+                GroupDevotionSection(
                   sermon: _latestSermon!,
                   progress: _latestProgress,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
+                      builder: (_) =>
                           GroupDevotionScreen(sermon: _latestSermon!),
                     ),
                   ).then((_) { if (mounted) _refreshAll(); }),
@@ -259,56 +248,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // 6. 이번 주 활동 (동기부여)
-              _WeeklyActivityCard(
+              WeeklyActivityCard(
                 sermonDays: _weeklySermon,
                 devotionDays: _weeklyDevotion,
                 bibleDays: _weeklyBible,
                 streak: _streak,
               ),
-
               const SizedBox(height: 20),
 
-              // 7. 저장한 설교 (보관함)
-              _SavedSermonsSection(
+              SavedSermonsSection(
                 savedSermons: _savedSermons,
                 onViewAll: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const SavedSermonsScreen()),
+                      builder: (_) => const SavedSermonsScreen()),
                 ).then((_) => _loadSavedSermons()),
                 onTap: (sermon) => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => SermonDetailScreen(sermon: sermon)),
+                      builder: (_) => SermonDetailScreen(sermon: sermon)),
                 ).then((_) => _loadSavedSermons()),
               ),
-
               const SizedBox(height: 20),
 
-              // 8. 주요 기능 퀵메뉴
-              _QuickMenu(
-                onSermonListTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SermonListScreen(),
+              QuickMenu(
+                onSermonListTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const SermonListScreen()),
+                ),
+                onNoticeTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NoticeScreen(
+                      churchCode: _churchCode ?? '',
+                      churchName: _churchName,
                     ),
-                  );
-                },
-                onNoticeTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NoticeScreen(
-                        churchCode: _churchCode ?? '',
-                        churchName: _churchName,
-                      ),
-                    ),
-                  );
-                },
+                  ),
+                ),
               ),
-
               const SizedBox(height: 20),
             ],
           ),
@@ -321,1321 +299,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                     builder: (_) => const SermonRegisterScreen()),
               ),
-              icon: const Icon(Icons.add),
-              label: const Text('설교 등록'),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('설교 등록',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w700)),
               backgroundColor: AppColors.primary,
             )
           : null,
-    );
-  }
-}
-
-// ─── 환영 카드 ──────────────────────────────────────
-class _WelcomeCard extends StatelessWidget {
-  final String churchName;
-
-  const _WelcomeCard({required this.churchName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.wb_sunny_outlined, color: Colors.white, size: 32),
-          const SizedBox(height: 12),
-          const Text(
-            '안녕하세요! 🙏',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            '오늘도 말씀과 함께하세요',
-            style: TextStyle(fontSize: 14, color: Colors.white),
-          ),
-          if (churchName.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.church, color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    churchName,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 최신 설교 카드 ─────────────────────────────────
-class _LatestSermonCard extends StatelessWidget {
-  final SermonModel sermon;
-  final VoidCallback onTap;
-
-  const _LatestSermonCard({required this.sermon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '이번 주 설교',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2)),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    sermon.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today,
-                          size: 14, color: AppColors.textSecondary),
-                      const SizedBox(width: 6),
-                      Text(
-                        sermon.formattedDate,
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.menu_book,
-                          size: 14, color: AppColors.textSecondary),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          sermon.bibleVerse,
-                          style: const TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    sermon.summary,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        '자세히 보기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward,
-                          size: 16, color: AppColors.primary),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── 오늘의 묵상 카드 ───────────────────────────────
-class _TodayDevotionCard extends StatelessWidget {
-  final String dayName;
-  final String devotion;
-  final UserProgressModel? progress;
-  final VoidCallback onTap;
-
-  const _TodayDevotionCard({
-    required this.dayName,
-    required this.devotion,
-    this.progress,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '오늘의 묵상',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          color: AppColors.secondary.withValues(alpha: 0.08),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-                color: AppColors.secondary.withValues(alpha: 0.3)),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          dayName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      // 주간 진행 현황
-                      if (progress != null)
-                        Text(
-                          '${progress!.completedCount}/5일 완료',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.secondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (progress != null) ...[
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress!.completedCount / 5,
-                        backgroundColor:
-                            AppColors.secondary.withValues(alpha: 0.2),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.secondary),
-                        minHeight: 6,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Text(
-                    devotion.isEmpty
-                        ? '주중 묵상은 월~금요일에 제공됩니다'
-                        : devotion,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: devotion.isEmpty
-                          ? AppColors.textHint
-                          : AppColors.textPrimary,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── 설교 없음 카드 ─────────────────────────────────
-class _EmptySermonCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppColors.textHint.withValues(alpha: 0.2)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            const Icon(Icons.menu_book_outlined,
-                size: 64, color: AppColors.textHint),
-            const SizedBox(height: 16),
-            const Text(
-              '아직 설교가 없습니다',
-              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 저장한 설교 섹션 ────────────────────────────────
-class _SavedSermonsSection extends StatelessWidget {
-  final List<SermonModel> savedSermons;
-  final VoidCallback onViewAll;
-  final void Function(SermonModel) onTap;
-
-  const _SavedSermonsSection({
-    required this.savedSermons,
-    required this.onViewAll,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final preview = savedSermons.take(3).toList();
-    final total = savedSermons.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 헤더 행
-        Row(
-          children: [
-            const Text(
-              '저장한 설교',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            if (total > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '총 $total개',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-            const Spacer(),
-            if (total > 0)
-              GestureDetector(
-                onTap: onViewAll,
-                child: const Row(
-                  children: [
-                    Text(
-                      '전체 보기',
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w500),
-                    ),
-                    Icon(Icons.chevron_right,
-                        size: 18, color: AppColors.primary),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // 저장 없음
-        if (total == 0)
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                  color: AppColors.textHint.withValues(alpha: 0.15)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(Icons.bookmark_border,
-                      size: 36, color: Colors.grey.shade300),
-                  const SizedBox(width: 14),
-                  const Text(
-                    '저장한 설교가 없습니다',
-                    style: TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                  color: AppColors.primary.withValues(alpha: 0.1)),
-            ),
-            child: Column(
-              children: [
-                ...preview.asMap().entries.map((e) {
-                  final idx = e.key;
-                  final sermon = e.value;
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: () => onTap(sermon),
-                        borderRadius: BorderRadius.only(
-                          topLeft: idx == 0
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                          topRight: idx == 0
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                          bottomLeft: idx == preview.length - 1
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                          bottomRight: idx == preview.length - 1
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.play_arrow_rounded,
-                                  color: AppColors.primary,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      sermon.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${sermon.date.month}월 ${sermon.date.day}일',
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textHint),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right,
-                                  size: 18, color: AppColors.textHint),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (idx < preview.length - 1)
-                        Divider(
-                            height: 1,
-                            indent: 14,
-                            endIndent: 14,
-                            color: AppColors.primary.withValues(alpha: 0.08)),
-                    ],
-                  );
-                }),
-                // "전체 보기" 버튼 (3개 초과 시)
-                if (total > 3) ...[
-                  Divider(
-                      height: 1,
-                      color: AppColors.primary.withValues(alpha: 0.08)),
-                  InkWell(
-                    onTap: onViewAll,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Text(
-                          '전체 보기 ›',
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ─── 빠른 메뉴 ──────────────────────────────────────
-class _QuickMenu extends StatelessWidget {
-  final VoidCallback onSermonListTap;
-  final VoidCallback onNoticeTap;
-
-  const _QuickMenu({
-    required this.onSermonListTap,
-    required this.onNoticeTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '주요 기능',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickMenuItem(
-                icon: Icons.menu_book,
-                label: '설교 노트',
-                color: AppColors.primary,
-                onTap: onSermonListTap,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickMenuItem(
-                icon: Icons.campaign_rounded,
-                label: '침신/교회 소식',
-                color: const Color(0xFF1565C0),
-                onTap: onNoticeTap,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _QuickMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickMenuItem({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withValues(alpha: 0.3)),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// --- 나의 기도제목 섹션 ---
-class _PrayerSection extends StatelessWidget {
-  final String uid;
-  final PrayerService prayerService;
-  final VoidCallback onManage;
-
-  const _PrayerSection({
-    required this.uid,
-    required this.prayerService,
-    required this.onManage,
-  });
-
-  Color _categoryColor(String category) {
-    switch (category) {
-      case '가족': return Colors.orange.shade300;
-      case '직장': return Colors.blue.shade300;
-      case '건강': return Colors.red.shade300;
-      case '교회': return Colors.green.shade300;
-      case '개인': return Colors.purple.shade300;
-      default:    return Colors.grey.shade400;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              '나의 기도제목',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: onManage,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '관리하기',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        StreamBuilder<List<PrayerRequestModel>>(
-          stream: prayerService.prayerStream(uid),
-          builder: (context, snapshot) {
-            final prayers = snapshot.data ?? [];
-            final sorted = List.of(prayers)
-              ..sort((a, b) {
-                if (a.isAnswered == b.isAnswered) return 0;
-                return a.isAnswered ? 1 : -1;
-              });
-            final display = sorted.take(3).toList();
-
-            return Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: AppColors.secondary.withValues(alpha: 0.2),
-                ),
-              ),
-              child: display.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          const Text('🙏', style: TextStyle(fontSize: 28)),
-                          const SizedBox(width: 12),
-                          Text(
-                            '기도제목을 추가해보세요',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey.shade500),
-                          ),
-                        ],
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        ...display.asMap().entries.map((e) {
-                          final idx = e.key;
-                          final prayer = e.value;
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 12),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 9, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: _categoryColor(prayer.category),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        prayer.category,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        prayer.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
-                                          decoration: prayer.isAnswered
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    if (prayer.isAnswered)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.shade100,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          '응답',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade700,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              if (idx < display.length - 1)
-                                Divider(
-                                    height: 1,
-                                    indent: 14,
-                                    endIndent: 14,
-                                    color: Colors.grey.withValues(alpha: 0.1)),
-                            ],
-                          );
-                        }),
-                        if (prayers.length > 3) ...[
-                          Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
-                          InkWell(
-                            onTap: onManage,
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(12),
-                              bottomRight: Radius.circular(12),
-                            ),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: Center(
-                                child: Text(
-                                  '전체 보기 >',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 12),
-        const _RepresentPrayerPromo(),
-      ],
-    );
-  }
-}
-
-// ─── 오늘의 성경 카드 ───────────────────────────────
-class _DailyBibleCard extends StatelessWidget {
-  const _DailyBibleCard();
-
-  static const _bibleAppPackage = 'com.bible_app.king_beginner_bible';
-  static const _bibleAppStore =
-      'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible';
-
-  Future<void> _openBibleApp() async {
-    await ActivityService().recordActivity('bible');
-    final appUri = Uri.parse('android-app://$_bibleAppPackage');
-    final storeUri = Uri.parse(_bibleAppStore);
-    try {
-      if (await canLaunchUrl(appUri)) {
-        await launchUrl(appUri);
-      } else {
-        await launchUrl(storeUri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      await launchUrl(storeUri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DailyBibleData.getToday();
-    final book = today['book'] as String;
-    final chapter = today['chapter'] as int;
-    final progress = DailyBibleData.getTodayProgress();
-
-    final now = DateTime.now();
-    final dateStr = '${now.month}월 ${now.day}일';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '오늘의 성경',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: const Color(0xFFB8860B).withValues(alpha: 0.25)),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFFDF0), Color(0xFFFFF8E1)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text('📖', style: TextStyle(fontSize: 22)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '$book $chapter장',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5D4037),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF8D6E63),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: const Color(0xFFD7CCC8),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFB8860B)),
-                    minHeight: 5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '신약 연간 읽기 ${(progress * 100).toStringAsFixed(0)}% 완료',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF8D6E63),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _openBibleApp,
-                    icon: const Icon(Icons.menu_book, size: 18),
-                    label: const Text('왕초보 성경통독으로 읽기'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB8860B),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 44),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── 대표기도 앱 교차 홍보 배너 ─────────────────────
-class _RepresentPrayerPromo extends StatelessWidget {
-  const _RepresentPrayerPromo();
-
-  static const _storeUrl =
-      'https://play.google.com/store/apps/details?id=com.nanoset.repre_prayer_app';
-
-  Future<void> _openStore() async {
-    final uri = Uri.parse(_storeUrl);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _openStore,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade100),
-        ),
-        child: Row(
-          children: [
-            const Text('🙏', style: TextStyle(fontSize: 20)),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '더 많은 대표기도문이 필요하신가요?',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2E7D32),
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    '대표기도 앱 · 상황별 기도문 모음',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF66BB6A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios,
-                size: 14, color: Colors.green.shade400),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 이번 주 활동 카드 ──────────────────────────────
-class _WeeklyActivityCard extends StatelessWidget {
-  final int sermonDays;
-  final int devotionDays;
-  final int bibleDays;
-  final int streak;
-
-  const _WeeklyActivityCard({
-    required this.sermonDays,
-    required this.devotionDays,
-    required this.bibleDays,
-    required this.streak,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '이번 주 활동',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.12)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _ActivityStat(emoji: '⛪', label: '예배', days: sermonDays),
-                _Divider(),
-                _ActivityStat(emoji: '💭', label: '묵상', days: devotionDays),
-                _Divider(),
-                _ActivityStat(emoji: '📚', label: '성경', days: bibleDays),
-                _Divider(),
-                _ActivityStat(emoji: '🔥', label: '연속', days: streak),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActivityStat extends StatelessWidget {
-  final String emoji;
-  final String label;
-  final int days;
-
-  const _ActivityStat({
-    required this.emoji,
-    required this.label,
-    required this.days,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 28)),
-        const SizedBox(height: 6),
-        Text(
-          '$days일',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 60,
-      child: VerticalDivider(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        thickness: 1,
-        width: 1,
-      ),
-    );
-  }
-}
-
-// ─── 이번 주 구역 예배 교재 섹션 ────────────────────
-class _GroupDevotionSection extends StatelessWidget {
-  final SermonModel sermon;
-  final UserProgressModel? progress;
-  final VoidCallback onTap;
-
-  const _GroupDevotionSection({
-    required this.sermon,
-    this.progress,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final completedCount = progress?.completedCount ?? 0;
-    final rawSummary = sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim();
-    final summaryPreview = rawSummary.length > 90
-        ? '${rawSummary.substring(0, 90)}...'
-        : rawSummary;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.groups_rounded, size: 22, color: AppColors.textPrimary),
-            const SizedBox(width: 8),
-            const Text(
-              '이번 주 구역 예배 교재',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2E5C8A), Color(0xFF3949AB)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF3949AB).withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 배지
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      '5일 묵상 교재',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  // 설교 제목
-                  Text(
-                    sermon.title,
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${sermon.pastor} 목사님  ·  ${sermon.bibleVerse}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.75),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  // 요약 미리보기
-                  Text(
-                    summaryPreview,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 1.55,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  // 5일 진행 표시
-                  Row(
-                    children: [
-                      ...List.generate(5, (i) => Container(
-                        width: 30,
-                        height: 30,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: i < completedCount
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.22),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: i < completedCount
-                                ? const Color(0xFF3949AB)
-                                : Colors.white,
-                          ),
-                        ),
-                      )),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$completedCount / 5일 완료',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // CTA 버튼
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      '구역 예배 교재 보러 가기  →',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF3949AB),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

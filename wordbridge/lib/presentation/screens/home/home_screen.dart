@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../devotion/group_devotion_screen.dart';
+import '../admin/sermon_register_screen.dart';
+import '../../../data/models/sermon_model.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -7,12 +12,32 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: const _WordBridgeHomeBody(),
+      floatingActionButton: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.data?.email == 'nanoset@naver.com') {
+            return FloatingActionButton.extended(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SermonRegisterScreen()),
+              ),
+              backgroundColor: const Color(0xFF1565C0),
+              icon: const Icon(Icons.upload_rounded, color: Colors.white),
+              label: const Text(
+                '설교 등록',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -57,7 +82,11 @@ class HomeScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.notifications_outlined,
                   size: 26, color: Color(0xFF1A1A2E)),
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('알림 기능은 준비 중입니다.')),
+                );
+              },
             ),
             Positioned(
               right: 10,
@@ -87,17 +116,12 @@ class _WordBridgeHomeBody extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // 1. 오늘의 말씀 배너 카드
-        const _DailyWordBanner(),
-        const SizedBox(height: 24),
-
-        // 2. 인기 목회자 그리드
+        // 1. 인기 목회자 그리드 (상단)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 섹션 헤딩
               Row(
                 children: [
                   Container(
@@ -129,38 +153,50 @@ class _WordBridgeHomeBody extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // 3x3 목사님 그리드
               GridView.count(
                 crossAxisCount: 3,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.85,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 0.60,
                 children:
                     _pastors.map((p) => _PastorCard(pastor: p)).toList(),
               ),
-              const SizedBox(height: 32),
-
-              // 하단 CTA 버튼
-              const _CtaButton(),
-              const SizedBox(height: 32),
             ],
           ),
         ),
+
+        const SizedBox(height: 24),
+
+        // 2. 오늘의 말씀 배너 (하단으로 이동)
+        const _DailyWordBanner(),
+
+        const SizedBox(height: 24),
+
+        // 3. CTA 버튼
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: _CtaButton(),
+        ),
+        const SizedBox(height: 24),
+
+        // 4. 크로스 프로모션
+        const _CrossPromoSection(),
+        const SizedBox(height: 32),
       ],
     );
   }
 }
 
-// ─── 오늘의 말씀 배너 ─────────────────────────────
+// ─── 앱 소개 배너 ─────────────────────────────────
 class _DailyWordBanner extends StatelessWidget {
   const _DailyWordBanner();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1565C0), Color(0xFF1E88E5), Color(0xFF42A5F5)],
@@ -178,13 +214,12 @@ class _DailyWordBanner extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // 배경 장식 원
           Positioned(
             right: -20,
             top: -20,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.07),
                 shape: BoxShape.circle,
@@ -192,26 +227,25 @@ class _DailyWordBanner extends StatelessWidget {
             ),
           ),
           Positioned(
-            right: 30,
+            right: 20,
             bottom: -30,
             child: Container(
-              width: 80,
-              height: 80,
+              width: 90,
+              height: 90,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-          // 본문
           Padding(
             padding: const EdgeInsets.all(22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 태그 칩
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -219,10 +253,10 @@ class _DailyWordBanner extends StatelessWidget {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('🥄', style: TextStyle(fontSize: 13)),
+                      Text('✨', style: TextStyle(fontSize: 13)),
                       SizedBox(width: 4),
                       Text(
-                        '오늘의 말씀 한 스푼',
+                        'AI 말씀비서',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.white,
@@ -233,58 +267,205 @@ class _DailyWordBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
+                // 메인 헤드카피
                 const Text(
-                  '"믿음은 바라는 것들의\n실상이요, 보이지 않는\n것들의 증거니"',
+                  '말씀이 삶이 되는 순간',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    height: 1.55,
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.5,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '히브리서 11:1',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        '묵상하기 →',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF1565C0),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                // 서브카피
+                Text(
+                  '말씀브릿지 AI 말씀비서가 도와드립니다',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                  ),
                 ),
+                const SizedBox(height: 6),
+                // 미니 설명
+                Text(
+                  '주일 설교 AI 요약 → 5일 묵상\n한국 대표 목회자 말씀을 오늘 내 삶에!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.75),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── 크로스 프로모션 섹션 ─────────────────────────────
+class _CrossPromoSection extends StatelessWidget {
+  const _CrossPromoSection();
+
+  static const _apps = [
+    _PromoApp(
+      emoji: '🙏',
+      name: '대표기도',
+      description: 'AI가 대신 드리는 대표 기도',
+      color: Color(0xFF5C6BC0),
+      playUrl:
+          'https://play.google.com/store/apps/details?id=com.nanoset.repre_prayer_app',
+    ),
+    _PromoApp(
+      emoji: '📖',
+      name: '왕초보 성경통독',
+      description: '쉽게 읽는 성경 완독 챌린지',
+      color: Color(0xFF2E7D32),
+      playUrl:
+          'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '🙏 함께 쓰면 더 좋은 앱',
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9E9E9E),
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _PromoCard(app: _apps[0])),
+              const SizedBox(width: 12),
+              Expanded(child: _PromoCard(app: _apps[1])),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PromoApp {
+  final String emoji;
+  final String name;
+  final String description;
+  final Color color;
+  final String playUrl;
+  const _PromoApp({
+    required this.emoji,
+    required this.name,
+    required this.description,
+    required this.color,
+    required this.playUrl,
+  });
+}
+
+class _PromoCard extends StatelessWidget {
+  final _PromoApp app;
+  const _PromoCard({required this.app});
+
+  Future<void> _launch() async {
+    final uri = Uri.parse(app.playUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _launch,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE0E0E0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 아이콘 원형 배경
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: app.color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(app.emoji,
+                    style: const TextStyle(fontSize: 20)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // 앱 이름
+            Text(
+              app.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A2E),
+                letterSpacing: -0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            // 설명
+            Text(
+              app.description,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF757575),
+                height: 1.4,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 10),
+            // Play 스토어 링크
+            Row(
+              children: [
+                Text(
+                  'Play 스토어',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: app.color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 10, color: app.color),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -298,7 +479,14 @@ class _PastorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => debugPrint('[WordBridge] 탭: ${pastor.name}'),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GroupDevotionScreen(
+            sermon: _buildDummySermon(pastor),
+          ),
+        ),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -314,11 +502,11 @@ class _PastorCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 14),
-            // 아바타: 실제 캐리커처 PNG 또는 이모지 fallback
+            const SizedBox(height: 8),
+            // 대문짝만한 캐리커처 아바타
             Container(
-              width: 60,
-              height: 60,
+              width: 105,
+              height: 105,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 boxShadow: [
@@ -346,14 +534,14 @@ class _PastorCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(pastor.emoji,
-                          style: const TextStyle(fontSize: 26)),
+                          style: const TextStyle(fontSize: 42)),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            // 목사님 이름만 (교회명 제거)
+            const SizedBox(height: 8),
+            // 이름만
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
@@ -369,24 +557,7 @@ class _PastorCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: pastor.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '말씀 보기',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: pastor.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -420,7 +591,25 @@ class _CtaButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => debugPrint('[WordBridge] 교회/목사님 추가 신청'),
+        onTap: () async {
+            final Uri emailLaunchUri = Uri(
+              scheme: 'mailto',
+              path: 'nanoset@naver.com',
+              queryParameters: {
+                'subject': '말씀브릿지 교회 추가 신청',
+              },
+            );
+            
+            if (await canLaunchUrl(emailLaunchUri)) {
+              await launchUrl(emailLaunchUri);
+            } else {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('메일 앱을 실행할 수 없습니다.')),
+                );
+              }
+            }
+          },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding:
@@ -486,6 +675,57 @@ class _PastorData {
   });
 }
 
+// ─── 더미 설교 데이터 생성 ───────────────────────────
+SermonModel _buildDummySermon(_PastorData p) {
+  final now = DateTime.now();
+  final name = p.name.replaceAll(' 목사', '');
+  return SermonModel(
+    id: 'dummy_${p.name.hashCode.abs()}',
+    churchCode: p.church,
+    title: _dummyTitles[p.name] ?? '은혜 위에 은혜',
+    date: now,
+    pastor: name,
+    bibleVerse: _dummyVerses[p.name] ?? '요한복음 1:16',
+    summary: '### 핵심 교훈\n\n'
+        '- **$name 목사님**의 말씀을 통해 하나님의 은혜를 새롭게 경험합니다.\n'
+        '- 주님의 말씀이 우리 삶의 나침반이 되어야 합니다.\n\n'
+        '> 이 말씀은 우리가 어떻게 살아야 하는지 명확한 방향을 제시합니다.',
+    devotionals: {
+      'day1': '오늘 말씀에서 받은 은혜를 한 가지 적어보며 주님께 감사합니다.',
+      'day2': '나의 삶에서 믿음으로 순종해야 할 영역은 어디인지 묵상합니다.',
+      'day3': '말씀 속에서 발견한 하나님의 성품을 묵상하고 닮기를 구합니다.',
+      'day4': '이 말씀을 이웃과 함께 나눌 방법을 생각하고 실천합니다.',
+      'day5': '한 주간 말씀대로 살았던 순간을 돌아보며 감사로 마무리합니다.',
+    },
+    keyPoints: [],
+    createdAt: now,
+  );
+}
+
+const _dummyTitles = {
+  '이찬수 목사': '은혜 위에 은혜',
+  '이재훈 목사': '복음의 능력',
+  '오정현 목사': '사랑으로 하나 되라',
+  '유기성 목사': '선한 목자를 따라서',
+  '진재혁 목사': '온 세상에 복음을',
+  '김은호 목사': '성령의 불꽃',
+  '김삼환 목사': '하나님의 영광을 위하여',
+  '이영훈 목사': '성령 충만한 삶',
+  '소강석 목사': '새 하늘 새 땅을 바라보며',
+};
+
+const _dummyVerses = {
+  '이찬수 목사': '요한복음 1:16',
+  '이재훈 목사': '로마서 1:16',
+  '오정현 목사': '에베소서 4:3',
+  '유기성 목사': '시편 23:1',
+  '진재혁 목사': '마태복음 28:19',
+  '김은호 목사': '사도행전 1:8',
+  '김삼환 목사': '이사야 43:7',
+  '이영훈 목사': '에베소서 5:18',
+  '소강석 목사': '요한계시록 21:1',
+};
+
 const _pastors = [
   _PastorData(
     name: '이찬수 목사',
@@ -548,6 +788,6 @@ const _pastors = [
     church: '새에덴교회',
     emoji: '🌸',
     color: Color(0xFF6A1B9A),
-    imagePath: 'assets/images/pastors/pastor_so_gangseok.png',
+    imagePath: 'assets/images/pastors/pastor_so_kangseok.png',
   ),
 ];

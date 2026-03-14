@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
-import '../onboarding/onboarding_screen.dart';
+import '../auth/login_screen.dart';
 import '../main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -41,11 +41,11 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-      // 비로그인 상태 → 온보딩으로
+      // 비로그인 상태 → 로그인 화면으로
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const OnboardingScreen(),
+          builder: (context) => const LoginScreen(),
         ),
       );
     }
