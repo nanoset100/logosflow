@@ -37,6 +37,11 @@ def _init_firebase():
     global _firebase_initialized
     if _firebase_initialized:
         return True
+    # 이미 다른 임포트에서 초기화된 경우 (uvicorn 이중 임포트 대응)
+    if firebase_admin._apps:
+        _firebase_initialized = True
+        print("[FCM] Firebase Admin 이미 초기화됨 (재사용)")
+        return True
     service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
     if not service_account_json:
         print("[FCM] FIREBASE_SERVICE_ACCOUNT 환경변수 없음 - 푸시 알림 비활성화")
