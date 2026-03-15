@@ -35,6 +35,9 @@ dependencies:
   flutter_markdown: ^0.7.3
   share_plus: ^10.0.0
 
+  # 푸시 알림 (포그라운드 배너)
+  flutter_local_notifications: ^17.2.3
+
   # 카카오 로그인
   kakao_flutter_sdk_user: ^1.6.1
 
