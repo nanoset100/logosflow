@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../data/services/member_service.dart';
+import '../../../data/services/notification_service.dart';
 import '../main_screen.dart';
 
 class EmailLoginScreen extends StatefulWidget {
@@ -64,7 +66,15 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       if (user != null) {
         // 교회코드 저장 (로그인 유지용)
         final code = widget.churchData['code'] as String? ?? '';
-        if (code.isNotEmpty) await _authService.saveChurchCode(code);
+        if (code.isNotEmpty) {
+          await _authService.saveChurchCode(code);
+          await MemberService.registerMember(
+            churchCode: code,
+            uid: user.uid,
+            email: user.email ?? email,
+          );
+          await NotificationService.saveToken();
+        }
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -115,7 +125,15 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       if (!mounted) return;
       if (user != null) {
         // 교회코드 저장 (로그인 유지용)
-        if (churchCode.isNotEmpty) await _authService.saveChurchCode(churchCode);
+        if (churchCode.isNotEmpty) {
+          await _authService.saveChurchCode(churchCode);
+          await MemberService.registerMember(
+            churchCode: churchCode,
+            uid: user.uid,
+            email: user.email ?? email,
+          );
+          await NotificationService.saveToken();
+        }
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,

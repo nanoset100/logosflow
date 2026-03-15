@@ -94,8 +94,12 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
         final adminResult = await AdminService().isAdmin(code);
-        // FCM 토큰을 members 컬렉션에 동기화 (기도 알림 수신용)
+        // 홈화면 접속 기록 (미출석 감지용)
         final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          await MemberService.recordActivity(churchCode: code, uid: uid);
+        }
+        // FCM 토큰을 members 컬렉션에 동기화 (기도 알림 수신용)
         if (uid != null) {
           final token = await FirebaseMessaging.instance.getToken();
           if (token != null) {

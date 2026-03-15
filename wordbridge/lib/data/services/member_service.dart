@@ -8,7 +8,7 @@ class MemberModel {
   final String uid;
   final String name;
   final String email;
-  final String role; // 성도, 집사, 권사, 장로 등
+  final String role;
   final DateTime? joinedAt;
   final String? fcmToken;
   final int? birthMonth;
@@ -59,7 +59,6 @@ class MemberModel {
 class MemberService {
   static final _firestore = FirebaseFirestore.instance;
 
-  /// 교인 목록 스트림 (실시간)
   static Stream<List<MemberModel>> membersStream(String churchCode) {
     return _firestore
         .collection('churches')
@@ -72,7 +71,6 @@ class MemberService {
             .toList());
   }
 
-  /// 로그인/회원가입 시 교인 자동 등록
   static Future<void> registerMember({
     required String churchCode,
     required String uid,
@@ -86,7 +84,6 @@ class MemberService {
         .collection('members')
         .doc(uid);
 
-    // 이미 등록된 경우 이름/역할만 업데이트하지 않음
     final existing = await ref.get();
     if (existing.exists) return;
 
@@ -100,7 +97,6 @@ class MemberService {
     debugPrint('[Member] 교인 등록 완료: $email');
   }
 
-  /// 교인 생일 업데이트
   static Future<void> updateBirthday({
     required String churchCode,
     required String uid,
@@ -120,7 +116,6 @@ class MemberService {
     });
   }
 
-  /// 목사님(관리자) FCM 토큰을 church 문서에 저장 (생일 알림 수신용)
   static Future<void> saveAdminToken({
     required String churchCode,
     required String fcmToken,
@@ -145,7 +140,6 @@ class MemberService {
     } catch (_) {}
   }
 
-  /// FCM 토큰 동기화 (users/{uid}.fcmToken → members/{uid}.fcmToken)
   static Future<void> syncFcmToken({
     required String churchCode,
     required String uid,
@@ -159,14 +153,12 @@ class MemberService {
         .update({'fcmToken': fcmToken});
   }
 
-  /// 목사님 → 교인 기도 알림 발송
   static Future<bool> sendPrayerNotification({
     required String memberUid,
     required String churchCode,
     String? memberName,
   }) async {
     try {
-      // 1. 교인 FCM 토큰 조회
       final memberDoc = await _firestore
           .collection('churches')
           .doc(churchCode)
@@ -181,8 +173,6 @@ class MemberService {
       }
 
       final name = memberName ?? memberDoc.data()?['name'] ?? '성도';
-
-      // 2. 서버로 개인 알림 발송
       final serverUrl = dotenv.env['WHISPER_SERVER_URL'] ?? '';
       final serverKey = dotenv.env['NOTIFY_SERVER_KEY'] ?? '';
 
@@ -199,7 +189,6 @@ class MemberService {
       );
 
       if (response.statusCode == 200) {
-        // 3. 기도 기록 저장
         await _firestore
             .collection('churches')
             .doc(churchCode)

@@ -112,6 +112,64 @@ async def _send_daily_devotion_notification():
     except Exception as e:
         print(f"[FCM] 알림 발송 실패: {e}")
 
+async def _check_absent_members():
+    """매주 월요일 오전 9:00 KST - 21일 이상 미출석 교인 목사님에게 알림"""
+    if not _firebase_initialized:
+        return
+    try:
+        from firebase_admin import firestore as admin_firestore
+        from datetime import datetime, timedelta
+        db = admin_firestore.client()
+        kst = pytz.timezone("Asia/Seoul")
+        now = datetime.now(kst)
+        threshold = now - timedelta(days=21)
+
+        churches = db.collection('churches').stream()
+        total = 0
+        for church in churches:
+            church_data = church.to_dict()
+            admin_tokens = church_data.get('adminFcmTokens', [])
+            if not admin_tokens:
+                continue
+
+            members = (db.collection('churches').document(church.id)
+                       .collection('members').stream())
+            absent = []
+            for m in members:
+                data = m.to_dict()
+                last_active = data.get('lastActiveAt')
+                joined_at = data.get('joinedAt')
+                name = data.get('name', '?')
+                role = data.get('role', '성도')
+
+                if last_active is None:
+                    if joined_at and joined_at.timestamp() < threshold.timestamp():
+                        absent.append(f"{name} {role}")
+                elif last_active.timestamp() < threshold.timestamp():
+                    absent.append(f"{name} {role}")
+
+            if not absent:
+                continue
+
+            names = ', '.join(absent[:3])
+            more = f" 외 {len(absent)-3}명" if len(absent) > 3 else ""
+            for token in set(admin_tokens):
+                msg = fcm_messaging.Message(
+                    notification=fcm_messaging.Notification(
+                        title="⚠️ 미출석 교인 알림",
+                        body=f"{names}{more}님이 3주 이상 접속하지 않았습니다",
+                    ),
+                    data={'type': 'absent', 'count': str(len(absent))},
+                    token=token,
+                    android=fcm_messaging.AndroidConfig(priority="high"),
+                )
+                fcm_messaging.send(msg)
+                total += 1
+        print(f"[Absent] 미출석 알림 {total}건 발송 완료")
+    except Exception as e:
+        print(f"[Absent] 미출석 알림 실패: {e}")
+
+
 async def _send_birthday_notifications():
     """매일 오전 6:00 KST - 오늘 생일인 교인을 목사님에게 알림"""
     if not _firebase_initialized:
@@ -188,8 +246,14 @@ async def startup_event():
         id="birthday_check",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        _check_absent_members,
+        CronTrigger(day_of_week="mon", hour=9, minute=0, timezone=pytz.timezone("Asia/Seoul")),
+        id="absent_check",
+        replace_existing=True,
+    )
     _scheduler.start()
-    print("[Scheduler] 매일 07:00 KST 묵상 알림 + 06:00 KST 생일 알림 스케줄러 시작")
+    print("[Scheduler] 07:00 묵상 + 06:00 생일 + 월09:00 미출석 스케줄러 시작")
 
 
 @app.on_event("shutdown")

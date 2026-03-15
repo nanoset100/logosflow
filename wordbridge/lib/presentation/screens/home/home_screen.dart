@@ -1,12 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../devotion/group_devotion_screen.dart';
 import '../admin/sermon_register_screen.dart';
+import '../admin/members_screen.dart';
 import '../../../data/models/sermon_model.dart';
+import '../../../data/services/admin_service.dart';
+import '../../../data/services/member_service.dart';
+import '../../../data/services/notification_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isAdmin = false;
+  String? _churchCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdminStatus();
+  }
+
+  Future<void> _loadAdminStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString('church_code') ?? '';
+    if (code.isEmpty) return;
+    final adminResult = await AdminService().isAdmin(code);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await MemberService.recordActivity(churchCode: code, uid: uid);
+    }
+    if (uid != null) {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await MemberService.syncFcmToken(churchCode: code, uid: uid, fcmToken: token);
+        if (adminResult) {
+          await MemberService.saveAdminToken(churchCode: code, fcmToken: token);
+        }
+      }
+    }
+    if (mounted) setState(() { _isAdmin = adminResult; _churchCode = code; });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,26 +55,36 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(context),
       body: const _WordBridgeHomeBody(),
-      floatingActionButton: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.data?.email == 'nanoset@naver.com') {
-            return FloatingActionButton.extended(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SermonRegisterScreen()),
-              ),
-              backgroundColor: const Color(0xFF1565C0),
-              icon: const Icon(Icons.upload_rounded, color: Colors.white),
-              label: const Text(
-                '설교 등록',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+      floatingActionButton: _isAdmin
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'members',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MembersScreen()),
+                  ),
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.people, color: Color(0xFF1565C0)),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton.extended(
+                  heroTag: 'sermon',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SermonRegisterScreen()),
+                  ),
+                  backgroundColor: const Color(0xFF1565C0),
+                  icon: const Icon(Icons.upload_rounded, color: Colors.white),
+                  label: const Text(
+                    '설교 등록',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            )
+          : null,
     );
   }
 
