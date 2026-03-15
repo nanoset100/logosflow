@@ -21,15 +21,19 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.logosflow.chimshinBibleNote
       groups:
-        - chimshin                      # Codemagic 환경변수 그룹 (OPENAI_API_KEY 등)
+        - chimshin                      # Codemagic 환경변수 그룹 (NOTIFY_SERVER_KEY)
       vars:
         BUNDLE_ID: "com.logosflow.chimshinBibleNote"
+        WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
 
     scripts:
       - name: .env 파일 생성
         script: |
-          echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .env
+          echo "FLAVOR=chimshin" > .env
+          echo "APP_NAME=침신 말씀노트" >> .env
+          echo "API_URL=https://asia-northeast3-chimshin-bible-note.cloudfunctions.net" >> .env
           echo "WHISPER_SERVER_URL=$WHISPER_SERVER_URL" >> .env
+          echo "NOTIFY_SERVER_KEY=$NOTIFY_SERVER_KEY" >> .env
 
       - name: Flutter pub get
         script: flutter pub get
