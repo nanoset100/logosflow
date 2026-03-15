@@ -66,22 +66,24 @@ class _MembersScreenState extends State<MembersScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
           title: const Text('교인 정보 수정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: '이름', border: OutlineInputBorder()),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedRole,
-                decoration: const InputDecoration(labelText: '직분', border: OutlineInputBorder()),
-                items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                onChanged: (v) => setS(() => selectedRole = v ?? selectedRole),
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: '이름', border: OutlineInputBorder()),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: const InputDecoration(labelText: '직분', border: OutlineInputBorder()),
+                  items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                  onChanged: (v) => setS(() => selectedRole = v ?? selectedRole),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
