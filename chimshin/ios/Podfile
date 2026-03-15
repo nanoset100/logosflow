@@ -45,24 +45,27 @@ post_install do |installer|
     end
   end
 
-  # Fix: Remove unsupported -G flag for arm64 (gRPC-Core / Firebase Messaging pod issue)
+  # Fix: Remove unsupported -G/-G0 flag for arm64 (gRPC-Core / abseil pod issue)
+  # Strategy: split-based rejection (handles -G, -G0, -G<n>) + direct xcconfig patching
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      ['OTHER_CFLAGS', 'COMPILER_FLAGS', 'OTHER_CPLUSPLUSFLAGS'].each do |key|
+      config.build_settings.each_key do |key|
         val = config.build_settings[key]
-        if val.is_a?(String) && val.match?(/(^|\s)-G(\s|$)/)
-          config.build_settings[key] = val.gsub(/(^|\s)-G(\s|$)/, ' ').strip
+        if val.is_a?(String) && val.include?('-G')
+          tokens = val.split(' ')
+          filtered = tokens.reject { |t| t.start_with?('-G') }
+          config.build_settings[key] = filtered.join(' ') if filtered.length != tokens.length
         elsif val.is_a?(Array)
-          config.build_settings[key] = val.reject { |f| f.strip == '-G' }
+          config.build_settings[key] = val.reject { |t| t.to_s.start_with?('-G') }
         end
       end
     end
   end
   Dir.glob(File.join(installer.sandbox.root.to_s, '**', '*.xcconfig')).each do |xcconfig_path|
     content = File.read(xcconfig_path)
-    new_content = content
-      .gsub(/(^|\s)-G(\s)/, '\1\2')
-      .gsub(/(^|\s)-G$/, '')
+    next unless content.include?('-G')
+    # Remove any -G<anything> token that appears as a compiler flag (preceded by whitespace)
+    new_content = content.gsub(/\s+-G\S*/, '')
     File.write(xcconfig_path, new_content) if content != new_content
   end
 end

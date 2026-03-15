@@ -44,12 +44,14 @@ workflows:
 
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |
-          echo "Removing unsupported -G flag from xcconfig files..."
-          find ios -name "*.xcconfig" -print0 | xargs -0 grep -l "\-G" 2>/dev/null | while read f; do
-            echo "Patching: $f"
-            sed -i '' 's/ -G / /g; s/ -G$//g; s/-G //g' "$f"
+          echo "=== Patching xcconfig files to remove -G/-G0 flag ==="
+          find ios -name "*.xcconfig" | while read f; do
+            if grep -q '\-G' "$f"; then
+              echo "Patching: $f"
+              sed -i '' 's/[[:space:]]*-G[^[:space:]]* / /g; s/[[:space:]]*-G[^[:space:]]*$//g' "$f"
+            fi
           done
-          echo "Done patching xcconfig files."
+          echo "=== Done patching ==="
 
       - name: Xcode 서명 설정 적용
         script: xcode-project use-profiles
