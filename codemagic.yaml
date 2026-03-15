@@ -42,11 +42,20 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
 
+      - name: Fix -G flag (gRPC-Core arm64 incompatibility)
+        script: |
+          echo "Removing unsupported -G flag from xcconfig files..."
+          find ios -name "*.xcconfig" -print0 | xargs -0 grep -l "\-G" 2>/dev/null | while read f; do
+            echo "Patching: $f"
+            sed -i '' 's/ -G / /g; s/ -G$//g; s/-G //g' "$f"
+          done
+          echo "Done patching xcconfig files."
+
       - name: Xcode 서명 설정 적용
         script: xcode-project use-profiles
 
       - name: Flutter build IPA
-        script: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+        script: flutter build ipa --release --no-pub --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
