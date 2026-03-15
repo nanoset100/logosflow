@@ -42,8 +42,14 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-      # Fix: unsupported option '-G' for target 'arm64-apple-ios15.0' (Firebase/gRPC pod issue)
-      config.build_settings['OTHER_CFLAGS'] = '$(inherited)'
+    end
+  end
+
+  # Fix: Remove unsupported -G flag for arm64 (gRPC-Core / Firebase Messaging pod issue)
+  Dir.glob("#{installer.sandbox.root}/**/*.xcconfig").each do |f|
+    content = File.read(f)
+    if content.include?('-G ')
+      File.write(f, content.gsub(' -G ', ' ').gsub('-G ', ''))
     end
   end
 end
