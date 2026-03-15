@@ -10,12 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  firebase_storage: ^11.5.6
-  firebase_messaging: ^14.7.9
+  # Firebase (v3 - Firebase iOS SDK 11.x, gRPC-Core 의존성 제거)
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.5
+  firebase_storage: ^12.3.3
+  firebase_messaging: ^15.1.6
 
   # UI
   go_router: ^13.0.0
