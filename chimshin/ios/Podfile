@@ -46,10 +46,21 @@ post_install do |installer|
   end
 
   # Fix: Remove unsupported -G flag for arm64 (gRPC-Core / Firebase Messaging pod issue)
-  Dir.glob("#{installer.sandbox.root}/**/*.xcconfig").each do |f|
-    content = File.read(f)
-    if content.include?('-G ')
-      File.write(f, content.gsub(' -G ', ' ').gsub('-G ', ''))
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      ['OTHER_CFLAGS', 'COMPILER_FLAGS'].each do |key|
+        val = config.build_settings[key]
+        if val.is_a?(String) && val.include?('-G')
+          config.build_settings[key] = val.gsub(/ -G\b/, '').strip
+        elsif val.is_a?(Array)
+          config.build_settings[key] = val.reject { |f| f.strip == '-G' }
+        end
+      end
     end
+  end
+  Dir.glob(File.join(installer.sandbox.root.to_s, '**', '*.xcconfig')).each do |xcconfig_path|
+    content = File.read(xcconfig_path)
+    new_content = content.gsub(/ -G\b/, '')
+    File.write(xcconfig_path, new_content) if content != new_content
   end
 end
