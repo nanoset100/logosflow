@@ -24,6 +24,92 @@ class _MembersScreenState extends State<MembersScreen> {
     setState(() => _churchCode = prefs.getString('church_code'));
   }
 
+  void _showMemberOptions(MemberModel member) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text(member.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFF1565C0)),
+              title: const Text('이름 / 직분 수정'),
+              onTap: () { Navigator.pop(context); _editMemberInfo(member); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.cake, color: Colors.orange),
+              title: Text(member.birthdayText.isNotEmpty ? '생일 수정 (${member.birthdayText})' : '생일 등록'),
+              onTap: () { Navigator.pop(context); _editBirthday(member); },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editMemberInfo(MemberModel member) async {
+    final nameCtrl = TextEditingController(text: member.name);
+    const roles = ['성도', '집사', '권사', '장로', '목사', '전도사'];
+    String selectedRole = roles.contains(member.role) ? member.role : '성도';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('교인 정보 수정'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: '이름', border: OutlineInputBorder()),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration: const InputDecoration(labelText: '직분', border: OutlineInputBorder()),
+                items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                onChanged: (v) => setS(() => selectedRole = v ?? selectedRole),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0)),
+              child: const Text('저장', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    final newName = nameCtrl.text.trim();
+    if (newName.isEmpty) return;
+    await MemberService.updateMemberInfo(
+      churchCode: _churchCode!,
+      uid: member.uid,
+      name: newName,
+      role: selectedRole,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('✅ $newName님 정보가 수정됐습니다'), backgroundColor: const Color(0xFF1565C0)),
+    );
+  }
+
   Future<void> _editBirthday(MemberModel member) async {
     DateTime selected = DateTime(
       DateTime.now().year,
@@ -146,13 +232,13 @@ class _MembersScreenState extends State<MembersScreen> {
                                 style: const TextStyle(fontSize: 12, color: Colors.orange)),
                           if (member.birthdayText.isEmpty)
                             GestureDetector(
-                              onTap: () => _editBirthday(member),
+                              onTap: () => _showMemberOptions(member),
                               child: const Text('+ 생일 등록',
                                   style: TextStyle(fontSize: 12, color: Colors.blue)),
                             ),
                         ],
                       ),
-                      onTap: () => _editBirthday(member),
+                      onTap: () => _showMemberOptions(member),
                       trailing: alreadySent
                           ? const Chip(
                               label: Text('전송완료',

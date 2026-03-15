@@ -130,6 +130,21 @@ class MemberService {
     });
   }
 
+  /// 교인 이름/직분 수정
+  static Future<void> updateMemberInfo({
+    required String churchCode,
+    required String uid,
+    required String name,
+    required String role,
+  }) async {
+    await _firestore
+        .collection('churches')
+        .doc(churchCode)
+        .collection('members')
+        .doc(uid)
+        .update({'name': name, 'role': role});
+  }
+
   /// 홈화면 접속 시 활동 기록 (미출석 감지용)
   static Future<void> recordActivity({
     required String churchCode,
