@@ -27,6 +27,10 @@ workflows:
         WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
 
     scripts:
+      - name: GoogleService-Info.plist 복원
+        script: |
+          echo "$GOOGLESERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
       - name: .env 파일 생성
         script: |
           echo "FLAVOR=chimshin" > .env
