@@ -190,7 +190,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     }
   }
 
-  // ── YouTube URL → 자막 추출 → AI 분석 ──
+  // ── YouTube URL → Whisper STT (Railway 서버) → AI 분석 ──
   Future<void> _runAiFromYoutube() async {
     final url = _youtubeCtrl.text.trim();
     if (url.isEmpty) {
@@ -199,10 +199,10 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     }
     setState(() => _isAiLoading = true);
     try {
-      _showSnack('YouTube 자막 추출 중...');
-      final transcript = await _youtubeService.getTranscript(url);
+      _showSnack('YouTube 오디오 추출 및 음성 인식 중... (수 분이 걸릴 수 있습니다)');
+      final transcript = await _whisperService.transcribeYoutube(url);
       if (!mounted) return;
-      _showSnack('자막 추출 완료. AI 분석 중...');
+      _showSnack('음성 인식 완료. AI 분석 중...');
       await _runAi(transcript);
     } catch (e) {
       if (mounted) _showSnack(e.toString().replaceFirst('Exception: ', ''));
