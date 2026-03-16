@@ -13,9 +13,17 @@ void main() async {
     debugPrint('[main] .env 로드 실패: $e');
   }
 
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('[main] Firebase 초기화 실패: $e');
+  }
 
-  await NotificationService.initialize();
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('[main] 알림 서비스 초기화 실패: $e');
+  }
 
   runApp(const ChimshinBibleApp());
 }
