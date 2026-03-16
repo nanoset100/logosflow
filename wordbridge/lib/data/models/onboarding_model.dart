@@ -18,7 +18,7 @@ final List<OnboardingModel> onboardingPages = [
     iconName: 'menu_book',
   ),
   const OnboardingModel(
-    title: 'AI가 설교를 요약하고\n주중 실천을 돕습니다',
+    title: 'AI가 매일\n말씀을 \n챙겨드립니다',
     description: '월요일부터 금요일까지 함께',
     iconName: 'auto_awesome',
   ),
