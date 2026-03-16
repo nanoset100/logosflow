@@ -68,3 +68,70 @@ workflows:
         submit_to_testflight: true
         submit_to_app_store: false
 
+
+  # ─────────────────────────────────────────────
+  # 말씀브릿지 - iOS App Store 배포
+  # Bundle ID: com.logosflow.wordbridge
+  # Team ID:   NCB9774DGY
+  # ─────────────────────────────────────────────
+  wordbridge-ios-release:
+    name: WordBridge iOS Release
+    max_build_duration: 60
+    working_directory: wordbridge
+
+    integrations:
+      app_store_connect: LuckyTenAPI
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.logosflow.wordbridge
+      groups:
+        - wordbridge                    # Codemagic 환경변수 그룹
+      vars:
+        BUNDLE_ID: "com.logosflow.wordbridge"
+        WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
+
+    scripts:
+      - name: GoogleService-Info.plist 복원
+        script: |
+          echo "$GOOGLESERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: .env 파일 생성
+        script: |
+          echo "FLAVOR=wordbridge" > .env
+          echo "APP_NAME=말씀브릿지" >> .env
+          echo "WHISPER_SERVER_URL=$WHISPER_SERVER_URL" >> .env
+
+      - name: Flutter pub get
+        script: flutter pub get
+
+      - name: Fix -G flag (gRPC-Core arm64 incompatibility)
+        script: |
+          echo "=== Patching xcconfig files to remove -G/-G0 flag ==="
+          find ios -name "*.xcconfig" | while read f; do
+            if grep -q '\-G' "$f"; then
+              echo "Patching: $f"
+              sed -i '' 's/[[:space:]]*-G[^[:space:]]* / /g; s/[[:space:]]*-G[^[:space:]]*$//g' "$f"
+            fi
+          done
+          echo "=== Done patching ==="
+
+      - name: Xcode 서명 설정 적용
+        script: xcode-project use-profiles
+
+      - name: Flutter build IPA
+        script: flutter build ipa --release --no-pub --export-options-plist=ios/ExportOptions.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
