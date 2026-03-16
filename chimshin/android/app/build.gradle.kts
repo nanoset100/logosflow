@@ -36,7 +36,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         multiDexEnabled = true
-        minSdk = flutter.minSdkVersion
+        minSdk = 23  // Firebase Auth 23.x 요구사항
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
