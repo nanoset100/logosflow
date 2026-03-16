@@ -67,3 +67,48 @@ workflows:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
+
+  # ─────────────────────────────────────────────
+  # 침신 말씀노트 - Android Google Play 배포
+  # Package: com.logosflow.chimshin
+  # ─────────────────────────────────────────────
+  chimshin-android-release:
+    name: Chimshin Android Release
+    max_build_duration: 60
+    working_directory: chimshin
+
+    environment:
+      flutter: stable
+      android_signing:
+        - chimshin_keystore
+      groups:
+        - chimshin
+      vars:
+        WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
+
+    scripts:
+      - name: google-services.json 복원
+        script: |
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+
+      - name: .env 파일 생성
+        script: |
+          echo "FLAVOR=chimshin" > .env
+          echo "APP_NAME=침신 말씀노트" >> .env
+          echo "WHISPER_SERVER_URL=$WHISPER_SERVER_URL" >> .env
+          echo "NOTIFY_SERVER_KEY=$NOTIFY_SERVER_KEY" >> .env
+
+      - name: Flutter pub get
+        script: flutter pub get
+
+      - name: Flutter build AAB
+        script: flutter build appbundle --release --no-pub
+
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false
