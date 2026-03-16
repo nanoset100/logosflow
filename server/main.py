@@ -400,6 +400,36 @@ async def text_to_speech(req: TtsRequest):
     return Response(content=audio_bytes, media_type="audio/mpeg")
 
 
+# ─── 프롬프트 파일 로더 ────────────────────────────────────────────────────────
+def _load_prompt(filename: str) -> str:
+    """server/prompts/ 디렉토리에서 프롬프트 파일을 읽어 반환"""
+    path = Path(__file__).parent / "prompts" / filename
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+
+# 서버 시작 시 한 번만 로드 (성능 최적화)
+_SYSTEM_PROMPT = _load_prompt("system_prompt.md")
+_SAMPLE_3 = _load_prompt("sample_sermon_3.md")
+_SAMPLE_4 = _load_prompt("sample_sermon_4.md")
+_SAMPLE_5 = _load_prompt("sample_sermon_5.md")
+
+_FEW_SHOT_SAMPLES = f"""
+아래는 고품질 설교 분석의 예시입니다. 이 수준의 신학적 깊이와 형식을 따르세요.
+
+{_SAMPLE_3}
+
+---
+
+{_SAMPLE_4}
+
+---
+
+{_SAMPLE_5}
+""".strip()
+
+
 class AnalyzeRequest(BaseModel):
     text: str
 
@@ -411,30 +441,33 @@ async def analyze_sermon(req: AnalyzeRequest):
 
     truncated = req.text[:10000] if len(req.text) > 10000 else req.text
 
-    system_prompt = (
-        "당신은 한국 침례교회의 설교 전문 분석가입니다. "
-        "설교 텍스트를 분석하여 성도들의 신앙 성장을 돕는 요약과 5일 묵상을 작성합니다. "
-        "신학적으로 정확하고 평신도가 이해하기 쉬운 언어를 사용하세요. "
-        "반드시 아래 JSON 형식만 반환하고 추가 설명은 쓰지 마세요."
+    system_prompt = _SYSTEM_PROMPT or (
+        "당신은 한국 침례교회의 설교 전문 신학자이자 분석가입니다. "
+        "신학적 깊이를 최우선으로 하되 평신도가 이해할 수 있는 언어를 사용하세요. "
+        "반드시 JSON 형식만 반환하고 추가 설명은 쓰지 마세요."
     )
 
-    user_prompt = f"""다음 설교 텍스트를 분석하여 JSON으로만 응답해주세요:
+    user_prompt = f"""{_FEW_SHOT_SAMPLES}
+
+---
+
+위 샘플과 동일한 수준으로 다음 설교 텍스트를 분석하여 JSON으로만 응답해주세요:
 
 {truncated}
 
 응답 형식 (JSON만, 한국어로):
 {{
   "summary": "첫 번째 문단: 설교의 신학적 배경과 본문 핵심 주제 소개. (3~4문장)\\n\\n두 번째 문단: 설교의 중심 논증과 성경적 근거 전개. (3~4문장)\\n\\n세 번째 문단: 삶의 변화로 이어지는 적용과 결론. (3~4문장)\\n\\n핵심 교훈\\n\\n- **핵심 교훈 제목 1**\\n내용 2~3문장.\\n\\n- **핵심 교훈 제목 2**\\n내용 2~3문장.\\n\\n- **핵심 교훈 제목 3**\\n내용 2~3문장.\\n\\n[헤더 없이 바로 첫 문단으로 시작, 각 문단 사이 빈 줄 필수]",
-  "day1": "Day 1: [제목]\\n\\n오늘 말씀에서 깨달은 핵심 진리 2~3문장.\\n\\nReflection: 이 진리가 오늘 나의 삶에 어떤 의미를 주는가?",
-  "day2": "Day 2: [제목]\\n\\n이 말씀을 삶에 적용하는 구체적인 방법 2~3문장.\\n\\nReflection: 오늘 하루 실천할 수 있는 한 가지 행동은 무엇인가?",
-  "day3": "Day 3: [제목]\\n\\n이 말씀에 근거한 기도 제목과 기도 2~3문장.\\n\\nReflection: 하나님께 어떤 마음으로 기도할 것인가?",
-  "day4": "Day 4: [제목]\\n\\n이번 주 실천할 구체적인 변화 2~3문장.\\n\\nReflection: 이 말씀이 나의 관계와 일상을 어떻게 바꾸는가?",
-  "day5": "Day 5: [제목]\\n\\n구역/셀 모임에서 함께 나눌 핵심 내용 2~3문장.\\n\\nReflection: 이번 주 말씀을 통해 공동체와 나누고 싶은 것은 무엇인가?"
+  "day1": "Day 1: [제목]\\n\\n핵심 진리 2~3문장.\\n\\n성경 구절 — 본문 인용\\n\\nReflection: 구체적이고 즉시 적용 가능한 질문?",
+  "day2": "Day 2: [제목]\\n\\n적용 내용 2~3문장.\\n\\n성경 구절 — 본문 인용\\n\\nReflection: 구체적이고 즉시 적용 가능한 질문?",
+  "day3": "Day 3: [제목]\\n\\n기도/내면 변화 2~3문장.\\n\\n성경 구절 — 본문 인용\\n\\nReflection: 구체적이고 즉시 적용 가능한 질문?",
+  "day4": "Day 4: [제목]\\n\\n실천 내용 2~3문장.\\n\\n성경 구절 — 본문 인용\\n\\nReflection: 구체적이고 즉시 적용 가능한 질문?",
+  "day5": "Day 5: [제목]\\n\\n공동체 나눔 2~3문장.\\n\\n성경 구절 — 본문 인용\\n\\nReflection: 구체적이고 즉시 적용 가능한 질문?"
 }}"""
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
