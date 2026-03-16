@@ -134,8 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadSavedSermons() async {
-    final saved = await _savedService.getSavedSermons();
-    if (mounted) setState(() => _savedSermons = saved);
+    try {
+      final saved = await _savedService.getSavedSermons();
+      if (mounted) setState(() => _savedSermons = saved);
+    } catch (_) {}
   }
 
   Future<void> _loadActivityStats() async {
@@ -339,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     MaterialPageRoute(
                         builder: (_) => const SermonRegisterScreen()),
-                  ),
+                  ).then((_) { if (mounted) _refreshAll(); }),
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text('설교 등록',
                       style: TextStyle(

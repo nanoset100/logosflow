@@ -12,9 +12,15 @@ class SavedSermonService {
   Future<List<SermonModel>> getSavedSermons() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_kKey) ?? [];
-    return raw
-        .map((s) => SermonModel.fromJson(jsonDecode(s) as Map<String, dynamic>))
-        .toList();
+    final result = <SermonModel>[];
+    for (final s in raw) {
+      try {
+        result.add(SermonModel.fromJson(jsonDecode(s) as Map<String, dynamic>));
+      } catch (_) {
+        // 손상된 항목은 건너뜀
+      }
+    }
+    return result;
   }
 
   Future<bool> isSaved(String sermonId) async {
