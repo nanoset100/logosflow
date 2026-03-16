@@ -42,9 +42,17 @@ class YoutubeService {
       throw Exception(
           'YouTube 오류: ${e.message}\n"텍스트 붙여넣기" 방식으로 입력해주세요.');
     } catch (e) {
-      if (e is Exception) rethrow;
+      // 우리가 직접 던진 사용자 친화적 메시지는 그대로 전달
+      if (e is Exception) {
+        final msg = e.toString();
+        if (msg.contains('자막') || msg.contains('YouTube 오류')) rethrow;
+      }
+      // XmlParserException 등 라이브러리 내부 오류 → 친화적 메시지로 변환
       throw Exception(
-          '자막을 가져올 수 없습니다.\n"텍스트 붙여넣기" 방식으로 입력해주세요.');
+          'YouTube 자막을 불러올 수 없습니다.\n'
+          '이 영상은 자막을 지원하지 않거나 YouTube 정책상 제한되어 있습니다.\n'
+          '"오디오 업로드" 탭에서 파일로 업로드하거나\n'
+          '"텍스트 붙여넣기" 방식으로 직접 입력해주세요.');
     }
   }
 

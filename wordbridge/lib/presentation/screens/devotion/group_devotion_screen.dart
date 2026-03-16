@@ -34,8 +34,8 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
         : rawSummary;
     final text =
         '📖 ${widget.sermon.title} - ${widget.sermon.pastor} 목사님\n\n$preview\n\n'
-        '👉 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!\n'
-        'https://play.google.com/store/apps/details?id=com.logosflow.chimshin';
+        '👉 구역 예배 5일 묵상 교재는 [말씀브릿지] 앱에서 무료로 확인하세요!\n'
+        'https://play.google.com/store/apps/details?id=com.logosflow.wordbridge';
     Share.share(text, subject: '${widget.sermon.title} - 구역 예배 교재');
   }
 
@@ -64,7 +64,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('이번 주 구역 예배 교재'),
+        title: Text('${widget.sermon.pastor} 목사님 말씀'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,

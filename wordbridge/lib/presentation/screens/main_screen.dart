@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home/home_screen.dart';
+import 'saved/saved_sermons_screen.dart';
+import 'prayer/prayer_requests_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,8 +17,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final _screens = const [
     HomeScreen(),
-    _ArchiveScreen(),
-    _PrayerScreen(),
+    SavedSermonsScreen(),
+    PrayerRequestsScreen(),
     _SettingsScreen(),
   ];
 
@@ -68,62 +72,142 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// ─── 보관함 (placeholder) ─────────────────────────
-class _ArchiveScreen extends StatelessWidget {
-  const _ArchiveScreen();
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.bookmark_rounded, size: 64, color: Color(0xFFBDBDBD)),
-              SizedBox(height: 16),
-              Text('보관함', style: TextStyle(fontSize: 18, color: Color(0xFF757575))),
-              SizedBox(height: 8),
-              Text('저장한 말씀이 여기에 표시됩니다', style: TextStyle(fontSize: 14, color: Color(0xFF9E9E9E))),
-            ],
-          ),
-        ),
-      );
-}
-
-// ─── 기도 (placeholder) ──────────────────────────
-class _PrayerScreen extends StatelessWidget {
-  const _PrayerScreen();
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.favorite_rounded, size: 64, color: Color(0xFFBDBDBD)),
-              SizedBox(height: 16),
-              Text('기도', style: TextStyle(fontSize: 18, color: Color(0xFF757575))),
-              SizedBox(height: 8),
-              Text('나의 기도제목이 여기에 표시됩니다', style: TextStyle(fontSize: 14, color: Color(0xFF9E9E9E))),
-            ],
-          ),
-        ),
-      );
-}
-
-// ─── 설정 (placeholder) ──────────────────────────
-class _SettingsScreen extends StatelessWidget {
+// ─── 설정 화면 ────────────────────────────────────
+class _SettingsScreen extends StatefulWidget {
   const _SettingsScreen();
+
   @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.settings_rounded, size: 64, color: Color(0xFFBDBDBD)),
-              SizedBox(height: 16),
-              Text('설정', style: TextStyle(fontSize: 18, color: Color(0xFF757575))),
-              SizedBox(height: 8),
-              Text('앱 설정 메뉴가 여기에 표시됩니다', style: TextStyle(fontSize: 14, color: Color(0xFF9E9E9E))),
-            ],
+  State<_SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<_SettingsScreen> {
+  String? _churchCode;
+  String? _email;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInfo();
+  }
+
+  Future<void> _loadInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final user = FirebaseAuth.instance.currentUser;
+    if (mounted) {
+      setState(() {
+        _churchCode = prefs.getString('church_code') ?? '-';
+        _email = user?.email ?? '-';
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃 하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1565C0),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(64, 40),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await FirebaseAuth.instance.signOut();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('설정'),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF212121),
+        elevation: 0,
+      ),
+      body: ListView(
+        children: [
+          const SizedBox(height: 16),
+
+          // 계정 정보 섹션
+          _sectionHeader('계정 정보'),
+          _infoTile(Icons.email_outlined, '이메일', _email ?? '-'),
+          _infoTile(Icons.church_outlined, '교회 코드', _churchCode ?? '-'),
+
+          const SizedBox(height: 16),
+
+          // 앱 정보 섹션
+          _sectionHeader('앱 정보'),
+          _infoTile(Icons.info_outline, '앱 버전', '1.0.0'),
+
+          const SizedBox(height: 16),
+
+          // 로그아웃
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: OutlinedButton.icon(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout, color: Colors.red),
+              label: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF757575),
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _infoTile(IconData icon, String label, String value) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 1),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF1565C0), size: 22),
+        title: Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF757575))),
+        trailing: Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF212121)),
+        ),
+      ),
+    );
+  }
 }
