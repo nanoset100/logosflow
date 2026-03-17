@@ -15,10 +15,18 @@ void main() async {
   }
 
   // Firebase 초기화
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('[main] Firebase 초기화 실패: $e');
+  }
 
   // 푸시 알림 초기화 (백그라운드 핸들러는 최우선 등록)
-  await NotificationService.initialize();
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('[main] 알림 서비스 초기화 실패: $e');
+  }
 
   runApp(const ChimshinBibleApp());
 }

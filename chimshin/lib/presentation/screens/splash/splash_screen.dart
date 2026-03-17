@@ -22,29 +22,38 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // ✅ 구독 먼저 시작 (Firebase 복원과 동시에)
-    final authFuture = FirebaseAuth.instance.authStateChanges().first;
-
-    // 2초 스플래시 표시 (이 동안 Firebase가 인증 복원)
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // 2초가 지났으므로 Firebase 복원 완료 상태
-    final user = await authFuture;
+    try {
+      final user = await FirebaseAuth.instance.authStateChanges().first
+          .timeout(const Duration(seconds: 5));
 
-    if (user != null) {
-      // FCM 토큰 저장 (로그인 확인 후)
-      NotificationService.saveToken();
-      // 로그인 상태 → 홈으로
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
-    } else {
-      // 비로그인 상태 → 온보딩으로
+      if (!mounted) return;
+
+      if (user != null) {
+        // FCM 토큰 저장 (로그인 확인 후)
+        NotificationService.saveToken();
+        // 로그인 상태 → 홈으로
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      } else {
+        // 비로그인 상태 → 온보딩으로
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const OnboardingScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[SplashScreen] 인증 확인 실패: $e');
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
