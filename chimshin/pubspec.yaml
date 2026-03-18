@@ -41,6 +41,10 @@ dependencies:
   # 카카오 로그인
   kakao_flutter_sdk_user: ^1.6.1
 
+  # Apple 로그인
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

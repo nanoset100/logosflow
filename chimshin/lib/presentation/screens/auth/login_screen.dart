@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/services/auth_service.dart';
+import '../home/home_screen.dart';
 import 'email_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -76,6 +78,30 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     _showSnackBar('카카오 로그인은 준비 중입니다');
+  }
+
+  Future<void> _loginWithApple() async {
+    if (_churchData == null) {
+      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final user = await _authService.signInWithApple();
+      if (user == null) return; // 사용자가 취소
+      if (!mounted) return;
+      await _authService.saveChurchCode(_churchData!['code'] as String);
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _goToSignUp() {
@@ -277,6 +303,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     backgroundColor: const Color(0xFFFEE500),
                     foregroundColor: Colors.black87,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Apple 로그인 버튼
+              SizedBox(
+                width: double.infinity,
+                child: SignInWithAppleButton(
+                  onPressed: _isLoading ? () {} : _loginWithApple,
+                  style: SignInWithAppleButtonStyle.black,
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
 
