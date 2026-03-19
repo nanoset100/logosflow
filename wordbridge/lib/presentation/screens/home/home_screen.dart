@@ -343,7 +343,7 @@ class _DailyWordBanner extends StatelessWidget {
                 const SizedBox(height: 6),
                 // 미니 설명
                 Text(
-                  '주일 설교 AI 요약 → 5일 묵상\n한국 대표 목회자 말씀을 오늘 내 삶에!',
+                  '주일 설교 요약 → 5일 묵상\n한국 대표 목회자 말씀을 오늘 내 삶에!',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.75),

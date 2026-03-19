@@ -19,7 +19,6 @@ class ChimshinBibleApp extends StatelessWidget {
           secondary: AppColors.secondary,
           error: AppColors.error,
         ),
-        fontFamily: 'Pretendard',
         useMaterial3: true,
 
         // 앱바 테마
@@ -29,7 +28,6 @@ class ChimshinBibleApp extends StatelessWidget {
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
-            fontFamily: 'Pretendard',
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
