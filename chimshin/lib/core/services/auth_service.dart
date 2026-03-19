@@ -124,8 +124,13 @@ class AuthService {
         nonce: nonce,
       );
 
+      final identityToken = appleCredential.identityToken;
+      if (identityToken == null) {
+        throw Exception('Apple 인증 토큰을 받지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }
+
       final oauthCredential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
+        idToken: identityToken,
         rawNonce: rawNonce,
       );
 
@@ -133,11 +138,13 @@ class AuthService {
       return result.user;
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) return null;
-      throw Exception('Apple 로그인에 실패했습니다');
+      throw Exception('Apple 로그인에 실패했습니다: ${e.message}');
+    } on FirebaseAuthException catch (e) {
+      throw Exception('Apple 로그인에 실패했습니다 (${e.code})');
     } catch (e) {
       final current = _auth.currentUser;
       if (current != null) return current;
-      throw Exception('Apple 로그인 중 오류가 발생했습니다');
+      rethrow;
     }
   }
 
