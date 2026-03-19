@@ -42,6 +42,9 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
 
+      - name: 앱 아이콘 생성
+        script: flutter pub run flutter_launcher_icons:main
+
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |
           echo "=== Patching xcconfig files to remove -G/-G0 flag ==="
@@ -108,6 +111,9 @@ workflows:
 
       - name: Flutter pub get
         script: flutter pub get
+
+      - name: 앱 아이콘 생성
+        script: flutter pub run flutter_launcher_icons:main
 
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |
