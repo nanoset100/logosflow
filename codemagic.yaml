@@ -42,8 +42,6 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
 
-      - name: 앱 아이콘 생성
-        script: flutter pub run flutter_launcher_icons:main
 
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |
@@ -112,8 +110,6 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
 
-      - name: 앱 아이콘 생성
-        script: flutter pub run flutter_launcher_icons:main
 
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |
