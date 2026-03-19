@@ -141,6 +141,42 @@ class AuthService {
     }
   }
 
+  // ─── 계정 삭제 ────────────────────────────────────
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+
+    // 1. Firestore 사용자 데이터 삭제
+    try {
+      final prayerSnap = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('prayer_requests')
+          .get();
+      for (final doc in prayerSnap.docs) {
+        await doc.reference.delete();
+      }
+      await _firestore.collection('users').doc(uid).delete();
+    } catch (_) {}
+
+    // 2. 로컬 데이터 정리
+    await clearChurchCode();
+    try {
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (_) {}
+
+    // 3. Firebase Auth 계정 삭제
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw Exception('보안을 위해 로그아웃 후 다시 로그인한 뒤 계정을 삭제해주세요');
+      }
+      rethrow;
+    }
+  }
+
   // ─── 로그아웃 ─────────────────────────────────────
   Future<void> signOut() async {
     final uid = _auth.currentUser?.uid;
