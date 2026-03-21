@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
@@ -290,36 +289,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 12),
-
-              // 카카오 로그인 버튼
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _loginWithKakao,
-                  icon: const Icon(Icons.chat_bubble),
-                  label: const Text('카카오로 시작하기'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFEE500),
-                    foregroundColor: Colors.black87,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Apple 로그인 버튼 (교회 코드 미확인 시 비활성)
-              Opacity(
-                opacity: _churchData != null ? 1.0 : 0.4,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SignInWithAppleButton(
-                    onPressed: (_isLoading || _churchData == null) ? () {} : _loginWithApple,
-                    style: SignInWithAppleButtonStyle.black,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
 
               const SizedBox(height: 32),
 
