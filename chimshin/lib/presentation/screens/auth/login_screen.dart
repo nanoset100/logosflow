@@ -308,13 +308,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 12),
 
-              // Apple 로그인 버튼
-              SizedBox(
-                width: double.infinity,
-                child: SignInWithAppleButton(
-                  onPressed: _isLoading ? () {} : _loginWithApple,
-                  style: SignInWithAppleButtonStyle.black,
-                  borderRadius: BorderRadius.circular(12),
+              // Apple 로그인 버튼 (교회 코드 미확인 시 비활성)
+              Opacity(
+                opacity: _churchData != null ? 1.0 : 0.4,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SignInWithAppleButton(
+                    onPressed: (_isLoading || _churchData == null) ? () {} : _loginWithApple,
+                    style: SignInWithAppleButtonStyle.black,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
 

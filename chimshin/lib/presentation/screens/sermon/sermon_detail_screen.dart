@@ -22,6 +22,8 @@ class SermonDetailScreen extends StatefulWidget {
 }
 
 class _SermonDetailScreenState extends State<SermonDetailScreen> {
+  final _shareButtonKey = GlobalKey();
+
   void _shareSermon(SermonModel sermon) {
     final preview = sermon.summary.length > 150
         ? '${sermon.summary.substring(0, 150)}...'
@@ -32,9 +34,17 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
 $preview
 
 👉 더 깊은 내용과 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!
-https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
+https://apps.apple.com/app/id6744803990''';
 
-    Share.share(text, subject: '${sermon.title} - ${sermon.pastor} 목사님 설교');
+    // iPad에서 share sheet 팝오버 위치 지정 (미지정 시 무반응)
+    final box = _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final origin = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+
+    Share.share(
+      text,
+      subject: '${sermon.title} - ${sermon.pastor} 목사님 설교',
+      sharePositionOrigin: origin,
+    );
   }
 
   @override
@@ -54,6 +64,7 @@ https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
         elevation: 0,
         actions: [
           IconButton(
+            key: _shareButtonKey,
             icon: const Icon(Icons.share_outlined),
             tooltip: '공유하기',
             onPressed: () => _shareSermon(widget.sermon),
