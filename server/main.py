@@ -3,8 +3,8 @@ import json
 import tempfile
 import asyncio
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import Response
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header
+from fastapi.responses import Response, HTMLResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, OpenAIError
@@ -225,7 +225,11 @@ app = FastAPI(title="Chimshin Whisper Server", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://logosflow-production.up.railway.app",
+        "http://localhost:8000",
+        "http://localhost:3000",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -302,6 +306,12 @@ async def transcribe_file(audio_path: str, language: str = "ko") -> str:
             Path(transcribe_path).unlink(missing_ok=True)
 
     return result if isinstance(result, str) else str(result)
+
+
+@app.get("/", response_class=HTMLResponse)
+async def landing_page():
+    html_path = Path(__file__).parent / "landing.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/health")
@@ -480,19 +490,33 @@ class NotifyTokenRequest(BaseModel):
     title: str
     body: str
     data: dict = {}
-    server_key: str
+    server_key: str = ""  # 레거시 지원 (optional)
 
 
-def _verify_server_key(key: str):
+def _verify_auth(server_key: str = "", authorization: str = ""):
+    """Firebase Auth 토큰 또는 레거시 server_key로 인증"""
+    # 1. Firebase Auth 토큰 검증 (Bearer token)
+    if authorization.startswith("Bearer "):
+        try:
+            from firebase_admin import auth as fb_auth
+            token = authorization.replace("Bearer ", "")
+            fb_auth.verify_id_token(token)
+            return  # 인증 성공
+        except Exception:
+            pass
+
+    # 2. 레거시 server_key 검증 (하위 호환)
     expected = os.getenv("NOTIFY_SERVER_KEY")
-    if not expected or key != expected:
-        raise HTTPException(status_code=403, detail="인증 실패")
+    if expected and server_key == expected:
+        return  # 인증 성공
+
+    raise HTTPException(status_code=403, detail="인증 실패")
 
 
 @app.post("/notify/topic")
-async def notify_topic(req: NotifyTopicRequest):
+async def notify_topic(req: NotifyTopicRequest, authorization: str = Header("")):
     """토픽 구독자 전체에게 푸시 알림 발송 (관리자 전용)"""
-    _verify_server_key(req.server_key)
+    _verify_auth(req.server_key, authorization)
     if not _firebase_initialized:
         raise HTTPException(status_code=503, detail="Firebase 초기화 안 됨")
     try:
@@ -507,9 +531,9 @@ async def notify_topic(req: NotifyTopicRequest):
 
 
 @app.post("/notify/token")
-async def notify_token(req: NotifyTokenRequest):
+async def notify_token(req: NotifyTokenRequest, authorization: str = Header("")):
     """특정 FCM 토큰으로 개인 알림 발송 (목사님 목양 알림용)"""
-    _verify_server_key(req.server_key)
+    _verify_auth(req.server_key, authorization)
     if not _firebase_initialized:
         raise HTTPException(status_code=503, detail="Firebase 초기화 안 됨")
     try:
