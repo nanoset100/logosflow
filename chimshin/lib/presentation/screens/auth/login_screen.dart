@@ -5,6 +5,7 @@ import '../../../core/constants/strings.dart';
 import '../../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'email_login_screen.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,14 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context) => EmailLoginScreen(churchData: _churchData!),
       ),
     );
-  }
-
-  void _loginWithKakao() {
-    if (_churchData == null) {
-      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
-      return;
-    }
-    _showSnackBar('카카오 로그인은 준비 중입니다');
   }
 
   Future<void> _loginWithApple() async {
@@ -286,6 +279,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Apple 로그인 버튼
+              SizedBox(
+                width: double.infinity,
+                child: SignInWithAppleButton(
+                  onPressed: _isLoading ? () {} : _loginWithApple,
+                  style: SignInWithAppleButtonStyle.black,
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
 
