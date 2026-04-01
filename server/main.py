@@ -365,6 +365,9 @@ async def transcribe_youtube(
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
             "--audio-quality", "64K", "--no-playlist",
+            "--sleep-requests", "1",
+            "--min-sleep-interval", "1",
+            "--max-sleep-interval", "3",
             "-o", output_path + ".%(ext)s",
         ]
 

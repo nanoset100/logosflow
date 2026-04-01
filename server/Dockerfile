@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
-# ffmpeg + yt-dlp 의존성
+# ffmpeg + nodejs (yt-dlp YouTube JS 챌린지 해결에 필수)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
