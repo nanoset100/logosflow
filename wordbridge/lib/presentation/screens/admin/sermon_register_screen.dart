@@ -190,7 +190,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     }
   }
 
-  // ── YouTube URL → Whisper STT (Railway 서버) → AI 분석 ──
+  // ── YouTube URL → 서버 /transcribe/youtube (yt-dlp + 쿠키 인증) → AI 분석 ──
   Future<void> _runAiFromYoutube() async {
     final url = _youtubeCtrl.text.trim();
     if (url.isEmpty) {

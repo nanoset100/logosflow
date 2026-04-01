@@ -354,13 +354,26 @@ async def transcribe_youtube(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "audio")
+
+        # Railway 환경변수 YOUTUBE_COOKIES 값을 임시 파일로 저장
+        cookie_file = "/tmp/youtube_cookies.txt"
+        cookie_content = os.getenv("YOUTUBE_COOKIES", "")
+        if cookie_content:
+            with open(cookie_file, "w", encoding="utf-8") as f:
+                f.write(cookie_content)
+
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
             "--audio-quality", "64K", "--no-playlist",
-            "--extractor-args", "youtube:player_client=ios",
-            "--no-check-certificates",
-            "-o", output_path + ".%(ext)s", url,
+            "-o", output_path + ".%(ext)s",
         ]
+
+        # 쿠키 파일이 존재하면 --cookies 옵션 추가
+        if cookie_content and Path(cookie_file).exists():
+            cmd += ["--cookies", cookie_file]
+
+        cmd.append(url)
+
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -370,17 +383,10 @@ async def transcribe_youtube(
 
         if proc.returncode != 0:
             err = stderr.decode(errors="replace")
-            # Railway 로그에 실제 오류 출력 (디버깅용)
             print(f"[yt-dlp ERROR] returncode={proc.returncode}\n{err[:2000]}")
             if "Private video" in err or "members-only" in err:
                 raise HTTPException(status_code=403, detail="비공개 또는 멤버십 전용 영상입니다")
-            if "Sign in" in err or "bot" in err.lower():
-                raise HTTPException(status_code=500, detail="YouTube 봇 감지로 차단되었습니다. 텍스트 붙여넣기 방식을 이용해주세요.")
             raise HTTPException(status_code=500, detail=f"YouTube 오디오 추출 실패: {err[:300]}")
-
-        mp3_path = output_path + ".mp3"
-        if not Path(mp3_path).exists():
-            raise HTTPException(status_code=500, detail="오디오 파일을 찾을 수 없습니다")
 
         mp3_path = output_path + ".mp3"
         if not Path(mp3_path).exists():
