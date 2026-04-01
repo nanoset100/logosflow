@@ -357,9 +357,8 @@ async def transcribe_youtube(
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
             "--audio-quality", "64K", "--no-playlist",
-            "--extractor-args", "youtube:player_client=android,web",
+            "--extractor-args", "youtube:player_client=ios",
             "--no-check-certificates",
-            "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36",
             "-o", output_path + ".%(ext)s", url,
         ]
         proc = await asyncio.create_subprocess_exec(
@@ -370,10 +369,18 @@ async def transcribe_youtube(
         _, stderr = await proc.communicate()
 
         if proc.returncode != 0:
-            err = stderr.decode()
+            err = stderr.decode(errors="replace")
+            # Railway 로그에 실제 오류 출력 (디버깅용)
+            print(f"[yt-dlp ERROR] returncode={proc.returncode}\n{err[:2000]}")
             if "Private video" in err or "members-only" in err:
                 raise HTTPException(status_code=403, detail="비공개 또는 멤버십 전용 영상입니다")
-            raise HTTPException(status_code=500, detail="YouTube 오디오 추출 실패. URL을 확인해주세요.")
+            if "Sign in" in err or "bot" in err.lower():
+                raise HTTPException(status_code=500, detail="YouTube 봇 감지로 차단되었습니다. 텍스트 붙여넣기 방식을 이용해주세요.")
+            raise HTTPException(status_code=500, detail=f"YouTube 오디오 추출 실패: {err[:300]}")
+
+        mp3_path = output_path + ".mp3"
+        if not Path(mp3_path).exists():
+            raise HTTPException(status_code=500, detail="오디오 파일을 찾을 수 없습니다")
 
         mp3_path = output_path + ".mp3"
         if not Path(mp3_path).exists():
