@@ -357,6 +357,9 @@ async def transcribe_youtube(
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
             "--audio-quality", "64K", "--no-playlist",
+            "--extractor-args", "youtube:player_client=android,web",
+            "--no-check-certificates",
+            "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36",
             "-o", output_path + ".%(ext)s", url,
         ]
         proc = await asyncio.create_subprocess_exec(
