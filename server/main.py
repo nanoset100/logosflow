@@ -2,6 +2,7 @@ import os
 import json
 import tempfile
 import asyncio
+import base64
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header
 from fastapi.responses import Response, HTMLResponse
@@ -355,12 +356,18 @@ async def transcribe_youtube(
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "audio")
 
-        # Railway 환경변수 YOUTUBE_COOKIES 값을 임시 파일로 저장
+        # Railway 환경변수 YOUTUBE_COOKIES (base64 인코딩됨) → 디코딩하여 파일로 저장
         cookie_file = "/tmp/youtube_cookies.txt"
         cookie_content = os.getenv("YOUTUBE_COOKIES", "")
         if cookie_content:
-            with open(cookie_file, "w", encoding="utf-8") as f:
-                f.write(cookie_content)
+            try:
+                decoded = base64.b64decode(cookie_content).decode("utf-8")
+                with open(cookie_file, "w", encoding="utf-8") as f:
+                    f.write(decoded)
+            except Exception:
+                # base64가 아닌 경우 (하위호환) 그대로 저장
+                with open(cookie_file, "w", encoding="utf-8") as f:
+                    f.write(cookie_content)
 
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
