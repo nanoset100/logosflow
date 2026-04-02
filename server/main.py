@@ -369,6 +369,8 @@ async def transcribe_youtube(
                 with open(cookie_file, "w", encoding="utf-8") as f:
                     f.write(cookie_content)
 
+        proxy_url = os.getenv("PROXY_URL", "")
+
         cmd = [
             "yt-dlp", "-x", "--audio-format", "mp3",
             "--audio-quality", "64K", "--no-playlist",
@@ -378,6 +380,9 @@ async def transcribe_youtube(
             "--max-sleep-interval", "3",
             "-o", output_path + ".%(ext)s",
         ]
+
+        if proxy_url:
+            cmd += ["--proxy", proxy_url]
 
         # 쿠키 파일이 존재하면 --cookies 옵션 추가
         if cookie_content and Path(cookie_file).exists():
