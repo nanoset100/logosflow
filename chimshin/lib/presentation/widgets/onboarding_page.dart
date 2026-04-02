@@ -25,57 +25,59 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(40.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 60),
 
-          // 아이콘
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+            // 아이콘
+            Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getIcon(page.iconName),
+                size: 80,
+                color: AppColors.primary,
+              ),
             ),
-            child: Icon(
-              _getIcon(page.iconName),
-              size: 80,
-              color: AppColors.primary,
+
+            const SizedBox(height: 48),
+
+            // 제목
+            Text(
+              page.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                height: 1.3,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 48),
+            const SizedBox(height: 16),
 
-          // 제목
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              height: 1.3,
+            // 설명
+            Text(
+              page.description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 16),
-
-          // 설명
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-              height: 1.5,
-            ),
-          ),
-
-          const Spacer(),
-        ],
+            const SizedBox(height: 60),
+          ],
+        ),
       ),
     );
   }

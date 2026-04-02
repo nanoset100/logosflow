@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../devotion/group_devotion_screen.dart';
 import '../admin/sermon_register_screen.dart';
@@ -210,7 +211,7 @@ class _WordBridgeHomeBody extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 0.60,
+                childAspectRatio: 0.48,
                 children:
                     _pastors.map((p) => _PastorCard(pastor: p)).toList(),
               ),
@@ -591,24 +592,26 @@ class _PastorCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            // 이름만
+            const SizedBox(height: 6),
+            // 이름 (FittedBox로 오버플로 방지)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                pastor.name,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A1A2E),
-                  letterSpacing: -0.3,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  pastor.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1A2E),
+                    letterSpacing: -0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
           ],
         ),
       ),

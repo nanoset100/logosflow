@@ -30,7 +30,7 @@ class AuthService {
 
       return {'code': code, ...data};
     } catch (e) {
-      throw Exception('교회 코드 확인 중 오류가 발생했습니다');
+      throw Exception('교회 코드 확인 중 오류가 발생했습니다. (네트워크 또는 서버 설정 확인 필요)');
     }
   }
 
@@ -145,6 +145,24 @@ class AuthService {
       final current = _auth.currentUser;
       if (current != null) return current;
       rethrow;
+    }
+  }
+
+  // ─── 비밀번호 재설정 ─────────────────────────────
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_authErrorMessage(e.code));
+    } catch (e) {
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('user-not-found')) {
+        throw Exception('등록되지 않은 이메일입니다');
+      }
+      if (msg.contains('invalid-email')) {
+        throw Exception('이메일 형식이 올바르지 않습니다');
+      }
+      throw Exception('비밀번호 재설정 이메일 발송 중 오류가 발생했습니다');
     }
   }
 

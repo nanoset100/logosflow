@@ -27,7 +27,7 @@ void main() {
       debugPrint('[main] 알림 서비스 초기화 실패: $e');
     }
 
-    runApp(const ChimshinBibleApp());
+    runApp(const WordBridgeApp());
   }, (error, stack) {
     debugPrint('[main] Uncaught error: $error\n$stack');
   });

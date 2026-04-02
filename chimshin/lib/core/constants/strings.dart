@@ -7,7 +7,7 @@ class AppStrings {
   static const String onboarding1Title = '설교를 듣고\n금방 잊으시나요?';
   static const String onboarding1Desc = 'AI 말씀비서가 매일 상기시켜드립니다';
 
-  static const String onboarding2Title = 'AI가 설교를 요약하고\n주중 실천을 돕습니다';
+  static const String onboarding2Title = 'AI가 매일\n말씀을 \n챙겨드립니다';
   static const String onboarding2Desc = '월요일부터 금요일까지 함께';
 
   static const String onboarding3Title = '신앙 성장을\n눈으로 확인하세요';

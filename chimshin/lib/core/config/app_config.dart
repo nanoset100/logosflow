@@ -17,6 +17,9 @@ class AppConfig {
   // Firebase
   static const String firebaseProjectId = 'chimshin-bible-note';
 
+  // 서버 URL (공개 가능 - 서버 측에서 Firebase Auth 토큰으로 인증)
+  static const String serverUrl = 'https://logosflow-production.up.railway.app';
+
   // 버전
   static const String version = '1.0.0';
   static const int buildNumber = 1;

@@ -1,0 +1,20 @@
+Analyzing wordbridge...                                         
+
+   info - Unnecessary braces in a string interpolation - lib\data\services\activity_service.dart:17:18 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\data\services\activity_service.dart:33:20 - unnecessary_brace_in_string_interps
+   info - The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\data\services\notification_service.dart:4:8 - unnecessary_import
+   info - Use 'const' with the constructor to improve performance - lib\data\services\notification_service.dart:67:7 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\data\services\notification_service.dart:68:18 - prefer_const_constructors
+warning - Unused import: '../../../data/services/notification_service.dart' - lib\presentation\screens\home\home_screen.dart:12:8 - unused_import
+warning - The value of the field '_churchCode' isn't used - lib\presentation\screens\home\home_screen.dart:23:11 - unused_field
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\notice\notice_detail_screen.dart:103:17 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\notice\notice_detail_screen.dart:112:17 - prefer_const_constructors
+warning - The value of the field '_service' isn't used - lib\presentation\screens\notice\notice_screen.dart:27:9 - unused_field
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\notice\notice_screen.dart:299:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\sermon\sermon_list_screen.dart:65:20 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\sermon\sermon_list_screen.dart:66:22 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\presentation\screens\sermon\sermon_list_screen.dart:68:27 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\sermon\sermon_list_screen.dart:69:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\sermon\sermon_list_screen.dart:75:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\sermon\sermon_list_screen.dart:77:28 - prefer_const_constructors
+

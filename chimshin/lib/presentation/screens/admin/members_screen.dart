@@ -179,7 +179,7 @@ class _MembersScreenState extends State<MembersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('교인 목록'),
+        title: const Text('교인 목록', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
         backgroundColor: const Color(0xFF1A6B3A),
         foregroundColor: Colors.white,
       ),

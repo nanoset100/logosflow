@@ -164,7 +164,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final churchName = widget.churchData['name'] as String;
+    final churchName = widget.churchData['name'] as String? ?? '말씀브릿지';
 
     return Scaffold(
       backgroundColor: Colors.white,

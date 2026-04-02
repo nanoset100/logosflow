@@ -338,7 +338,11 @@ class _SummaryTabState extends State<_SummaryTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── 상단: 레이블 + 음성 칩 ────────────
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         '🎙️ 설교 듣기',
@@ -348,67 +352,72 @@ class _SummaryTabState extends State<_SummaryTab> {
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      const Spacer(),
-                      // 남성 칩
-                      GestureDetector(
-                        onTap: () => _changeVoice(VoiceType.male),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _selectedVoice == VoiceType.male
-                                ? AppColors.primary
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _selectedVoice == VoiceType.male
-                                  ? AppColors.primary
-                                  : Colors.grey.shade300,
+                      
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 남성 칩
+                          GestureDetector(
+                            onTap: () => _changeVoice(VoiceType.male),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _selectedVoice == VoiceType.male
+                                    ? AppColors.primary
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _selectedVoice == VoiceType.male
+                                      ? AppColors.primary
+                                      : Colors.grey.shade300,
+                                ),
+                              ),
+                              child: Text(
+                                '👨 남성',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedVoice == VoiceType.male
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            '👨 남성',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _selectedVoice == VoiceType.male
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
+                          const SizedBox(width: 8),
+                          // 여성 칩
+                          GestureDetector(
+                            onTap: () => _changeVoice(VoiceType.female),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _selectedVoice == VoiceType.female
+                                    ? AppColors.secondary
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _selectedVoice == VoiceType.female
+                                      ? AppColors.secondary
+                                      : Colors.grey.shade300,
+                                ),
+                              ),
+                              child: Text(
+                                '👩 여성',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedVoice == VoiceType.female
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // 여성 칩
-                      GestureDetector(
-                        onTap: () => _changeVoice(VoiceType.female),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _selectedVoice == VoiceType.female
-                                ? AppColors.secondary
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _selectedVoice == VoiceType.female
-                                  ? AppColors.secondary
-                                  : Colors.grey.shade300,
-                            ),
-                          ),
-                          child: Text(
-                            '👩 여성',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _selectedVoice == VoiceType.female
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

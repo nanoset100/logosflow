@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home/home_screen.dart';
 import 'saved/saved_sermons_screen.dart';
-import 'prayer/prayer_requests_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +17,6 @@ class _MainScreenState extends State<MainScreen> {
   final _screens = const [
     HomeScreen(),
     SavedSermonsScreen(),
-    PrayerRequestsScreen(),
     _SettingsScreen(),
   ];
 
@@ -57,11 +55,6 @@ class _MainScreenState extends State<MainScreen> {
             label: '보관함',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border_rounded),
-            activeIcon: Icon(Icons.favorite_rounded),
-            label: '기도',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings_rounded),
             label: '설정',
@@ -96,12 +89,23 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     if (mounted) {
       setState(() {
         _churchCode = prefs.getString('church_code') ?? '-';
-        _email = user?.email ?? '-';
+        _email = user?.email;
       });
     }
   }
 
   Future<void> _logout() async {
+    if (_email == null) {
+      // 게스트인 경우 바로 로그인 화면으로
+      Navigator.pushReplacementNamed(context, '/'); // SplashScreen이 '/'라고 가정하거나, 직접 LoginScreen으로 보냄
+      // 여기서 직접 push 처리 (splash나 login 라우트 필요)
+      await FirebaseAuth.instance.signOut(); // 혹시 모를 로컬 권한 초기화
+      if (mounted) {
+         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      }
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -129,6 +133,9 @@ class _SettingsScreenState extends State<_SettingsScreen> {
 
     if (confirmed == true) {
       await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      }
     }
   }
 
@@ -148,8 +155,9 @@ class _SettingsScreenState extends State<_SettingsScreen> {
 
           // 계정 정보 섹션
           _sectionHeader('계정 정보'),
-          _infoTile(Icons.email_outlined, '이메일', _email ?? '-'),
-          _infoTile(Icons.church_outlined, '교회 코드', _churchCode ?? '-'),
+          _infoTile(Icons.email_outlined, '이메일', _email ?? '게스트 (둘러보기 중)'),
+          if (_email != null)
+            _infoTile(Icons.church_outlined, '교회 코드', _churchCode ?? '-'),
 
           const SizedBox(height: 16),
 
@@ -159,16 +167,22 @@ class _SettingsScreenState extends State<_SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 로그아웃
+          // 로그아웃 / 로그인 버튼
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: OutlinedButton.icon(
               onPressed: _logout,
-              icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+              icon: Icon(
+                _email == null ? Icons.login : Icons.logout, 
+                color: _email == null ? const Color(0xFF1565C0) : Colors.red,
+              ),
+              label: Text(
+                _email == null ? '로그인하러 가기' : '로그아웃', 
+                style: TextStyle(color: _email == null ? const Color(0xFF1565C0) : Colors.red),
+              ),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
-                side: const BorderSide(color: Colors.red),
+                side: BorderSide(color: _email == null ? const Color(0xFF1565C0) : Colors.red),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),

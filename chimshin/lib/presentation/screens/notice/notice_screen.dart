@@ -107,15 +107,32 @@ class _NoticeScreenState extends State<NoticeScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _NoticeList(
-            notices: NoticeService.dummyDenominationNotices,
-            emptyMessage: '등록된 교단 소식이 없습니다',
-            accentColor: const Color(0xFF1565C0),
+          // 교단 공지: Firestore 스트림 (더미 데이터는 데이터 없을 때만)
+          StreamBuilder<List<NoticeModel>>(
+            stream: _service.denominationNoticesStream(),
+            builder: (context, snapshot) {
+              final notices = snapshot.data ?? NoticeService.dummyDenominationNotices;
+              return _NoticeList(
+                notices: notices,
+                emptyMessage: '등록된 교단 소식이 없습니다',
+                accentColor: const Color(0xFF1565C0),
+              );
+            },
           ),
-          _NoticeList(
-            notices: NoticeService.getLocalChurchNotices(widget.churchName),
-            emptyMessage: '등록된 교회 소식이 없습니다',
-            accentColor: AppColors.primary,
+          // 교회 공지: Firestore 스트림 (실시간 동기화)
+          StreamBuilder<List<NoticeModel>>(
+            stream: _service.churchNoticesStream(widget.churchCode),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final notices = snapshot.data ?? [];
+              return _NoticeList(
+                notices: notices,
+                emptyMessage: '등록된 교회 소식이 없습니다',
+                accentColor: AppColors.primary,
+              );
+            },
           ),
         ],
       ),

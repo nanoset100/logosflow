@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../data/services/member_service.dart';
+import '../../../data/services/notification_service.dart';
 import '../home/home_screen.dart';
 
 class EmailLoginScreen extends StatefulWidget {
@@ -64,7 +66,16 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       if (user != null) {
         // 교회코드 저장 (로그인 유지용)
         final code = widget.churchData['code'] as String? ?? '';
-        if (code.isNotEmpty) await _authService.saveChurchCode(code);
+        if (code.isNotEmpty) {
+          await _authService.saveChurchCode(code);
+          // 교인 자동 등록 + FCM 토큰 동기화
+          await MemberService.registerMember(
+            churchCode: code,
+            uid: user.uid,
+            email: user.email ?? email,
+          );
+          await NotificationService.saveToken();
+        }
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -115,7 +126,16 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       if (!mounted) return;
       if (user != null) {
         // 교회코드 저장 (로그인 유지용)
-        if (churchCode.isNotEmpty) await _authService.saveChurchCode(churchCode);
+        if (churchCode.isNotEmpty) {
+          await _authService.saveChurchCode(churchCode);
+          // 교인 자동 등록 + FCM 토큰 동기화
+          await MemberService.registerMember(
+            churchCode: churchCode,
+            uid: user.uid,
+            email: user.email ?? email,
+          );
+          await NotificationService.saveToken();
+        }
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -132,6 +152,128 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // ─── 비밀번호 재설정 다이얼로그 ──────────────────
+  void _showPasswordResetDialog() {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        bool isSending = false;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                '비밀번호 재설정',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '가입하신 이메일 주소를 입력하시면\n비밀번호 재설정 링크를 보내드립니다.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: resetEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'example@email.com',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isSending
+                      ? null
+                      : () async {
+                          final email = resetEmailController.text.trim();
+                          if (email.isEmpty) {
+                            _showSnackBar('이메일을 입력해주세요', isError: true);
+                            return;
+                          }
+
+                          setDialogState(() => isSending = true);
+
+                          try {
+                            await _authService.sendPasswordResetEmail(email);
+                            if (!mounted) return;
+                            Navigator.pop(dialogContext);
+                            _showSnackBar(
+                              '비밀번호 재설정 이메일을 발송했습니다. 메일함을 확인해주세요.',
+                            );
+                          } catch (e) {
+                            setDialogState(() => isSending = false);
+                            if (mounted) {
+                              _showSnackBar(
+                                e.toString().replaceAll('Exception: ', ''),
+                                isError: true,
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('발송하기'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -301,7 +443,30 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                 ),
               ],
 
-              const SizedBox(height: 32),
+              // 비밀번호 찾기 (로그인 모드에서만)
+              if (!_isSignUpMode) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _showPasswordResetDialog,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      '비밀번호를 잊으셨나요?',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
 
               // 로그인 / 회원가입 버튼
               SizedBox(

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../core/config/app_config.dart';
 
 class WhisperService {
   static String _extractDetail(String body, int statusCode) {
@@ -13,8 +13,7 @@ class WhisperService {
     }
   }
 
-  static String get _baseUrl =>
-      dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
+  static String get _baseUrl => AppConfig.serverUrl;
 
   /// 오디오 파일 → Whisper STT → 텍스트 반환
   Future<String> transcribeFile(File audioFile, {String language = 'ko'}) async {

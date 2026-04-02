@@ -1,0 +1,285 @@
+{
+  "timestamp": "2026-03-16T09:16:39.303Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-16T06:21:51.034Z",
+    "activeFeatures": [
+      "chimshin",
+      "server",
+      "wordbridge",
+      "logosflow"
+    ],
+    "primaryFeature": "chimshin",
+    "features": {
+      "chimshin": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-05T13:11:10.399Z",
+          "lastUpdated": "2026-03-07T02:37:52.077Z"
+        },
+        "lastFile": "m:/MyProject777/logosflow/chimshin/patch_sermon_row.py"
+      },
+      "server": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T11:22:01.517Z",
+          "lastUpdated": "2026-03-16T06:21:51.034Z"
+        },
+        "lastFile": "m:/MyProject777/logosflow/server/main.py"
+      },
+      "wordbridge": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-08T05:17:19.765Z",
+          "lastUpdated": "2026-03-08T05:17:19.765Z"
+        },
+        "lastFile": "m:\\MyProject777\\logosflow\\wordbridge\\android\\app\\src\\main\\kotlin\\com\\logosflow\\wordbridge\\MainActivity.kt"
+      },
+      "logosflow": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T08:24:01.091Z",
+          "lastUpdated": "2026-03-15T08:25:07.568Z"
+        },
+        "lastFile": "m:\\MyProject777\\logosflow\\make_store_screenshots.py"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-01T12:16:41.110Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-16T06:21:51.034Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-05T13:11:10.399Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-06T03:22:05.557Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-06T03:51:27.033Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-06T09:19:31.322Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-06T09:21:03.680Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T00:40:18.462Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T02:37:52.077Z",
+        "feature": "chimshin",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:22:01.517Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T12:29:26.419Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T12:40:01.364Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T14:00:19.496Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T05:17:19.765Z",
+        "feature": "wordbridge",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T09:11:19.283Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T06:16:06.344Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T06:16:41.637Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T09:10:17.097Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T09:10:29.730Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T09:10:46.689Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T11:22:40.371Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T11:52:36.821Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T13:52:13.970Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-14T13:52:58.684Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T06:44:52.197Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T06:45:05.563Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T08:24:01.091Z",
+        "feature": "logosflow",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T08:24:37.569Z",
+        "feature": "logosflow",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T08:25:07.568Z",
+        "feature": "logosflow",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T02:14:14.068Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T02:42:01.832Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T02:43:04.439Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T02:51:16.687Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T03:03:07.031Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T03:03:21.879Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-16T06:21:51.034Z",
+        "feature": "server",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

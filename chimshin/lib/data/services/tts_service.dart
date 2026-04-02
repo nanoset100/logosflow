@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../core/config/app_config.dart';
 
 enum VoiceType {
   male,   // 👨 alloy (남성)
@@ -14,8 +14,7 @@ class TtsService {
   bool _isPaused = false;
   VoiceType _currentVoice = VoiceType.male;
 
-  static String get _baseUrl =>
-      dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
+  static String get _baseUrl => AppConfig.serverUrl;
 
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/saved_sermon_service.dart';
-import '../sermon/sermon_detail_screen.dart';
+import '../devotion/group_devotion_screen.dart'; // 수정: SermonDetailScreen 대신 GroupDevotionScreen
 
 class SavedSermonsScreen extends StatefulWidget {
   const SavedSermonsScreen({super.key});
@@ -52,7 +52,7 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('저장한 설교 (${_sermons.length})'),
+        title: const Text('설교 노트'), // 수정: 제목 변경
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -65,16 +65,16 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _sermons.length,
                   itemBuilder: (context, index) {
-                    return _SavedSermonCard(
-                      sermon: _sermons[index],
+                    final sermon = _sermons[index];
+                    return _SermonCard(
+                      sermon: sermon,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              SermonDetailScreen(sermon: _sermons[index]),
+                          builder: (context) => GroupDevotionScreen(sermon: sermon),
                         ),
                       ).then((_) => _loadSermons()),
-                      onUnsave: () => _unsave(_sermons[index]),
+                      onUnsave: () => _unsave(sermon),
                     );
                   },
                 ),
@@ -86,15 +86,15 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bookmark_border, size: 80, color: Colors.grey.shade300),
+          Icon(Icons.menu_book_outlined, size: 80, color: Colors.grey.shade300), // 아이콘 변경
           const SizedBox(height: 16),
           const Text(
-            '저장한 설교가 없습니다',
+            '아직 보관된 설교 노트가 없습니다',
             style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           const Text(
-            '설교 요약 탭에서 저장하기를 눌러보세요',
+            '홈 화면에서 설교를 눌러 저장해보세요',
             style: TextStyle(fontSize: 14, color: AppColors.textHint),
           ),
         ],
@@ -103,13 +103,13 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
   }
 }
 
-// ─── 저장된 설교 카드 ──────────────────────────────
-class _SavedSermonCard extends StatelessWidget {
+// ─── 침신 앱 스타일 설교 카드 ──────────────────────────
+class _SermonCard extends StatelessWidget {
   final SermonModel sermon;
   final VoidCallback onTap;
   final VoidCallback onUnsave;
 
-  const _SavedSermonCard({
+  const _SermonCard({
     required this.sermon,
     required this.onTap,
     required this.onUnsave,
@@ -118,64 +118,109 @@ class _SavedSermonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
+        side: BorderSide(
+          color: AppColors.primary.withValues(alpha: 0.1),
+        ),
       ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 플레이 아이콘
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.play_arrow_rounded,
-                  color: AppColors.primary,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // 제목 + 날짜
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      sermon.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+              // 상단: 날짜와 저장 해제 버튼
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${sermon.formattedDate} (${sermon.dayOfWeek})',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${sermon.date.month}월 ${sermon.date.day}일',
-                      style: const TextStyle(
-                          fontSize: 13, color: AppColors.textHint),
-                    ),
-                  ],
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline,
+                        color: Colors.grey.shade400, size: 20),
+                    onPressed: onUnsave,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: '저장 해제',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // 제목
+              Text(
+                sermon.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              // 저장 해제 버튼
-              IconButton(
-                icon: Icon(Icons.delete_outline,
-                    color: Colors.grey.shade400, size: 22),
-                onPressed: onUnsave,
-                tooltip: '저장 해제',
+
+              const SizedBox(height: 8),
+
+              // 본문
+              Row(
+                children: [
+                  const Icon(Icons.menu_book, size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    sermon.bibleVerse,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // 요약
+              Text(
+                sermon.summary,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 목사님
+              Row(
+                children: [
+                  const Icon(Icons.person, size: 16, color: AppColors.textHint),
+                  const SizedBox(width: 8),
+                  Text(
+                    sermon.pastor,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

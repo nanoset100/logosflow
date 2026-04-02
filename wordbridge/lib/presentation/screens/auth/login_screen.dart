@@ -3,6 +3,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/services/auth_service.dart';
+import '../main_screen.dart';
 import 'email_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -280,7 +281,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
+
+              // 둘러보기 버튼 (게스트 모드)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MainScreen()),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.explore_outlined, size: 20),
+                  label: const Text('둘러보기 (로그인 없이 시작)'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    side: BorderSide(color: AppColors.textHint.withValues(alpha: 0.5)),
+                    minimumSize: const Size(double.infinity, 52),
+                    textStyle: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 48),
 
               // 회원가입 링크
               Row(

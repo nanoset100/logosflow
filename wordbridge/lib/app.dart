@@ -3,8 +3,8 @@ import 'core/config/app_config.dart';
 import 'core/constants/colors.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 
-class ChimshinBibleApp extends StatelessWidget {
-  const ChimshinBibleApp({super.key});
+class WordBridgeApp extends StatelessWidget {
+  const WordBridgeApp({super.key});
 
   @override
   Widget build(BuildContext context) {

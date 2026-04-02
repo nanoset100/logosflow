@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../core/config/app_config.dart';
 
 class SermonAiResult {
   final String summary;
@@ -10,8 +10,7 @@ class SermonAiResult {
 }
 
 class AiSermonService {
-  static String get _baseUrl =>
-      dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
+  static String get _baseUrl => AppConfig.serverUrl;
 
   Future<SermonAiResult> analyze(String sermonText) async {
     if (sermonText.trim().isEmpty) {

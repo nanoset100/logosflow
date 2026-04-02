@@ -33,6 +33,7 @@ import 'widgets/group_devotion_section.dart';
 import 'widgets/weekly_activity_card.dart';
 import 'widgets/saved_sermons_section.dart';
 import 'widgets/quick_menu.dart';
+import '../../../core/services/update_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,6 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
     _loadActivityStats();
     SavedSermonService.changeNotifier.addListener(_onSavedChange);
+    // Google Play In-App Update 체크
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdate(context);
+    });
   }
 
   void _onSavedChange() => _loadSavedSermons();

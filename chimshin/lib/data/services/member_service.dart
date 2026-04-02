@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import '../../core/config/app_config.dart';
 
 class MemberModel {
   final String uid;
@@ -197,19 +198,20 @@ class MemberService {
 
       final name = memberName ?? memberDoc.data()?['name'] ?? '성도';
 
-      // 2. 서버로 개인 알림 발송
-      final serverUrl = dotenv.env['WHISPER_SERVER_URL'] ?? '';
-      final serverKey = dotenv.env['NOTIFY_SERVER_KEY'] ?? '';
+      // 2. 서버로 개인 알림 발송 (Firebase Auth 토큰으로 인증)
+      final idToken = await FirebaseAuth.instance.currentUser?.getIdToken() ?? '';
 
       final response = await http.post(
-        Uri.parse('$serverUrl/notify/token'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${AppConfig.serverUrl}/notify/token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
         body: jsonEncode({
           'token': fcmToken,
           'title': '🙏 목사님의 기도',
           'body': '목사님이 오늘 $name님을 위해 기도하셨습니다',
           'data': {'type': 'prayer', 'memberUid': memberUid},
-          'server_key': serverKey,
         }),
       );
 

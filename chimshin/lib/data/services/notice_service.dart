@@ -4,15 +4,7 @@ import '../models/notice_model.dart';
 class NoticeService {
   final _db = FirebaseFirestore.instance;
 
-  // ─── 인메모리 로컬 교회 공지 (시연용) ────────────────
-  // 실제 배포 시엔 Firestore에만 저장하고 스트림으로 구독
-  static final List<NoticeModel> _localChurchNotices = [];
-
-  static List<NoticeModel> getLocalChurchNotices(String churchName) {
-    return [..._localChurchNotices, ...dummyChurchNotices(churchName)];
-  }
-
-  /// 교회 공지 추가 (시연용 로컬 + Firestore 뼈대)
+  /// 교회 공지 추가 (Firestore 저장)
   Future<void> addChurchNotice({
     required String churchCode,
     required String churchName,
@@ -21,7 +13,7 @@ class NoticeService {
     required String author,
   }) async {
     final notice = NoticeModel(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
+      id: '',
       title: title,
       content: content,
       author: author,
@@ -30,15 +22,21 @@ class NoticeService {
       isPinned: false,
     );
 
-    // 로컬 인메모리 저장 (시연용)
-    _localChurchNotices.insert(0, notice);
+    await _db
+        .collection('churches')
+        .doc(churchCode)
+        .collection('notices')
+        .add(notice.toJson());
+  }
 
-    // TODO(배포 전): Firestore 저장 활성화
-    // await _db
-    //     .collection('churches')
-    //     .doc(churchCode)
-    //     .collection('notices')
-    //     .add(notice.toJson());
+  /// 교회 공지 삭제
+  Future<void> deleteChurchNotice(String churchCode, String noticeId) async {
+    await _db
+        .collection('churches')
+        .doc(churchCode)
+        .collection('notices')
+        .doc(noticeId)
+        .delete();
   }
 
   // ─── 교단/학교 공지 (전체 공통) ────────────────────
