@@ -20,6 +20,13 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
   void initState() {
     super.initState();
     _loadSermons();
+    SavedSermonService.changeNotifier.addListener(_loadSermons);
+  }
+
+  @override
+  void dispose() {
+    SavedSermonService.changeNotifier.removeListener(_loadSermons);
+    super.dispose();
   }
 
   Future<void> _loadSermons() async {

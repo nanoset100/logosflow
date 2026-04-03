@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/sermon_service.dart';
@@ -97,35 +98,41 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
 
     setState(() => _isSaving = true);
     try {
-      final sermon = SermonModel(
-        id: '',
-        churchCode: _churchCode!,
-        title: _titleCtrl.text.trim(),
-        date: _sermonDate,
-        pastor: _pastorCtrl.text.trim(),
-        bibleVerse: _bibleVerseCtrl.text.trim(),
-        summary: _summaryCtrl.text.trim(),
-        audioUrl: null,
-        devotionals: {
+      // 1. 저장할 데이터 구성
+      final sermonData = {
+        'churchCode': _churchCode!,
+        'title': _titleCtrl.text.trim(),
+        'date': Timestamp.fromDate(_sermonDate),
+        'pastor': _pastorCtrl.text.trim(),
+        'bibleVerse': _bibleVerseCtrl.text.trim(),
+        'summary': _summaryCtrl.text.trim(),
+        'audioUrl': null,
+        'devotionals': {
           'day1': _day1Ctrl.text.trim(),
           'day2': _day2Ctrl.text.trim(),
           'day3': _day3Ctrl.text.trim(),
           'day4': _day4Ctrl.text.trim(),
           'day5': _day5Ctrl.text.trim(),
         },
-        keyPoints: [],
-        createdAt: DateTime.now(),
-      );
+        'keyPoints': [],
+        'createdAt': FieldValue.serverTimestamp(),
+      };
 
-      final id = await _sermonService.addSermon(sermon);
+      // 2. Firestore 저장 (churches/{code}/sermons)
+      await FirebaseFirestore.instance
+          .collection('churches')
+          .doc(_churchCode)
+          .collection('sermons')
+          .add(sermonData);
+
       if (!mounted) return;
 
-      if (id != null) {
-        _showSnack('설교가 등록되었습니다');
-        Navigator.of(context).pop();
-      } else {
-        _showSnack('저장 실패. 다시 시도해주세요');
-      }
+      // 3. 성공 피드백 및 화면 이동
+      _showSnack('설교가 등록되었습니다');
+      Navigator.of(context).pop();
+    } catch (e) {
+      debugPrint('[SermonRegister] 저장 오류: $e');
+      _showSnack('저장 중 오류가 발생했습니다: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

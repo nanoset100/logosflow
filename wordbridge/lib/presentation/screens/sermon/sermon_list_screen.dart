@@ -3,10 +3,19 @@ import '../../../core/constants/colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/sermon_service.dart';
-import 'sermon_detail_screen.dart';
+import '../devotion/group_devotion_screen.dart';
 
 class SermonListScreen extends StatefulWidget {
-  const SermonListScreen({super.key});
+  final String? churchCode;
+  final String? pastorName;
+  final String? churchName;
+
+  const SermonListScreen({
+    super.key,
+    this.churchCode,
+    this.pastorName,
+    this.churchName,
+  });
 
   @override
   State<SermonListScreen> createState() => _SermonListScreenState();
@@ -24,10 +33,12 @@ class _SermonListScreenState extends State<SermonListScreen> {
   }
 
   Future<void> _loadChurchCode() async {
-    final code = await _authService.getSavedChurchCode();
-    setState(() {
-      _churchCode = code;
-    });
+    if (widget.churchCode != null) {
+      setState(() => _churchCode = widget.churchCode);
+    } else {
+      final code = await _authService.getSavedChurchCode();
+      setState(() => _churchCode = code);
+    }
   }
 
   @override
@@ -38,12 +49,16 @@ class _SermonListScreenState extends State<SermonListScreen> {
       );
     }
 
+    final title = widget.pastorName != null
+        ? '${widget.pastorName} 설교'
+        : '설교 노트';
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('설교 노트'),
+        title: Text(title),
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
+        foregroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
       ),
       body: StreamBuilder<List<SermonModel>>(
@@ -54,6 +69,31 @@ class _SermonListScreenState extends State<SermonListScreen> {
           }
 
           if (snapshot.hasError) {
+            final errorMsg = snapshot.error.toString();
+            if (errorMsg.contains('permission-denied')) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      '로그인이 필요합니다',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '설교를 보려면 교회 코드로 로그인해주세요',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+              );
+            }
             return Center(
               child: Text('오류가 발생했습니다: ${snapshot.error}'),
             );
@@ -69,16 +109,27 @@ class _SermonListScreenState extends State<SermonListScreen> {
                   Icon(
                     Icons.menu_book_outlined,
                     size: 80,
-                    color: AppColors.textHint,
+                    color: Colors.grey[300],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '아직 설교가 없습니다',
+                    '아직 등록된 설교가 없습니다',
                     style: TextStyle(
                       fontSize: 16,
-                      color: AppColors.textSecondary,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (widget.churchName != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.churchName!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -95,7 +146,7 @@ class _SermonListScreenState extends State<SermonListScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SermonDetailScreen(sermon: sermon),
+                      builder: (_) => GroupDevotionScreen(sermon: sermon),
                     ),
                   );
                 },
@@ -125,7 +176,7 @@ class _SermonCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: const Color(0xFF1565C0).withValues(alpha: 0.1),
         ),
       ),
       child: InkWell(
@@ -136,77 +187,67 @@ class _SermonCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 날짜
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                  const Icon(Icons.calendar_today,
+                      size: 16, color: Color(0xFF1565C0)),
                   const SizedBox(width: 8),
                   Text(
                     '${sermon.formattedDate} (${sermon.dayOfWeek})',
                     style: const TextStyle(
                       fontSize: 14,
-                      color: AppColors.primary,
+                      color: Color(0xFF1565C0),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
-              // 제목
               Text(
                 sermon.title,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: Color(0xFF1A1A2E),
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              // 본문
               Row(
                 children: [
-                  const Icon(Icons.menu_book, size: 16, color: AppColors.textSecondary),
+                  const Icon(Icons.menu_book,
+                      size: 16, color: Color(0xFF757575)),
                   const SizedBox(width: 8),
                   Text(
                     sermon.bibleVerse,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: Color(0xFF757575),
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
-
-              // 요약
               Text(
-                sermon.summary,
+                sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: Color(0xFF757575),
                   height: 1.4,
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // 목사님
               Row(
                 children: [
-                  const Icon(Icons.person, size: 16, color: AppColors.textHint),
+                  const Icon(Icons.person,
+                      size: 16, color: Color(0xFF9E9E9E)),
                   const SizedBox(width: 8),
                   Text(
                     sermon.pastor,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.textHint,
+                      color: Color(0xFF9E9E9E),
                     ),
                   ),
                 ],

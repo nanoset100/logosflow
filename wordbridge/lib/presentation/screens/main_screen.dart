@@ -156,8 +156,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
           // 계정 정보 섹션
           _sectionHeader('계정 정보'),
           _infoTile(Icons.email_outlined, '이메일', _email ?? '게스트 (둘러보기 중)'),
-          if (_email != null)
-            _infoTile(Icons.church_outlined, '교회 코드', _churchCode ?? '-'),
+          // _infoTile(Icons.church_outlined, '교회 코드', _churchCode ?? '-'),
 
           const SizedBox(height: 16),
 

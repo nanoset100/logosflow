@@ -4,10 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../devotion/group_devotion_screen.dart';
 import '../admin/sermon_register_screen.dart';
 import '../admin/members_screen.dart';
-import '../../../data/models/sermon_model.dart';
+import '../sermon/sermon_list_screen.dart';
 import '../../../data/services/admin_service.dart';
 import '../../../data/services/member_service.dart';
 import '../../../data/services/notification_service.dart';
@@ -211,7 +210,7 @@ class _WordBridgeHomeBody extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 0.48,
+                childAspectRatio: 0.78,
                 children:
                     _pastors.map((p) => _PastorCard(pastor: p)).toList(),
               ),
@@ -534,8 +533,10 @@ class _PastorCard extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => GroupDevotionScreen(
-            sermon: _buildDummySermon(pastor),
+          builder: (_) => SermonListScreen(
+            churchCode: pastor.churchCode,
+            pastorName: pastor.name,
+            churchName: pastor.church,
           ),
         ),
       ),
@@ -554,11 +555,10 @@ class _PastorCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 8),
-            // 대문짝만한 캐리커처 아바타
+            const SizedBox(height: 6),
             Container(
-              width: 105,
-              height: 105,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 boxShadow: [
@@ -586,14 +586,13 @@ class _PastorCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(pastor.emoji,
-                          style: const TextStyle(fontSize: 42)),
+                          style: const TextStyle(fontSize: 32)),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 6),
-            // 이름 (FittedBox로 오버플로 방지)
+            const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FittedBox(
@@ -601,7 +600,7 @@ class _PastorCard extends StatelessWidget {
                 child: Text(
                   pastor.name,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF1A1A2E),
                     letterSpacing: -0.3,
@@ -611,7 +610,7 @@ class _PastorCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
           ],
         ),
       ),
@@ -717,73 +716,25 @@ class _CtaButton extends StatelessWidget {
 class _PastorData {
   final String name;
   final String church;
+  final String churchCode;
   final String emoji;
   final Color color;
-  final String imagePath; // 실제 캐리커처 PNG 경로 (없으면 emoji fallback)
+  final String imagePath;
   const _PastorData({
     required this.name,
     required this.church,
+    required this.churchCode,
     required this.emoji,
     required this.color,
     required this.imagePath,
   });
 }
 
-// ─── 더미 설교 데이터 생성 ───────────────────────────
-SermonModel _buildDummySermon(_PastorData p) {
-  final now = DateTime.now();
-  final name = p.name.replaceAll(' 목사', '');
-  return SermonModel(
-    id: 'dummy_${p.name.hashCode.abs()}',
-    churchCode: p.church,
-    title: _dummyTitles[p.name] ?? '은혜 위에 은혜',
-    date: now,
-    pastor: name,
-    bibleVerse: _dummyVerses[p.name] ?? '요한복음 1:16',
-    summary: '### 핵심 교훈\n\n'
-        '- **$name 목사님**의 말씀을 통해 하나님의 은혜를 새롭게 경험합니다.\n'
-        '- 주님의 말씀이 우리 삶의 나침반이 되어야 합니다.\n\n'
-        '> 이 말씀은 우리가 어떻게 살아야 하는지 명확한 방향을 제시합니다.',
-    devotionals: {
-      'day1': '오늘 말씀에서 받은 은혜를 한 가지 적어보며 주님께 감사합니다.',
-      'day2': '나의 삶에서 믿음으로 순종해야 할 영역은 어디인지 묵상합니다.',
-      'day3': '말씀 속에서 발견한 하나님의 성품을 묵상하고 닮기를 구합니다.',
-      'day4': '이 말씀을 이웃과 함께 나눌 방법을 생각하고 실천합니다.',
-      'day5': '한 주간 말씀대로 살았던 순간을 돌아보며 감사로 마무리합니다.',
-    },
-    keyPoints: [],
-    createdAt: now,
-  );
-}
-
-const _dummyTitles = {
-  '이찬수 목사': '은혜 위에 은혜',
-  '이재훈 목사': '복음의 능력',
-  '오정현 목사': '사랑으로 하나 되라',
-  '유기성 목사': '선한 목자를 따라서',
-  '진재혁 목사': '온 세상에 복음을',
-  '김은호 목사': '성령의 불꽃',
-  '김삼환 목사': '하나님의 영광을 위하여',
-  '이영훈 목사': '성령 충만한 삶',
-  '소강석 목사': '새 하늘 새 땅을 바라보며',
-};
-
-const _dummyVerses = {
-  '이찬수 목사': '요한복음 1:16',
-  '이재훈 목사': '로마서 1:16',
-  '오정현 목사': '에베소서 4:3',
-  '유기성 목사': '시편 23:1',
-  '진재혁 목사': '마태복음 28:19',
-  '김은호 목사': '사도행전 1:8',
-  '김삼환 목사': '이사야 43:7',
-  '이영훈 목사': '에베소서 5:18',
-  '소강석 목사': '요한계시록 21:1',
-};
-
 const _pastors = [
   _PastorData(
     name: '이찬수 목사',
     church: '분당우리교회',
+    churchCode: '1001',
     emoji: '✝️',
     color: Color(0xFF1565C0),
     imagePath: 'assets/images/pastors/pastor_lee_chansu.png',
@@ -791,6 +742,7 @@ const _pastors = [
   _PastorData(
     name: '이재훈 목사',
     church: '온누리교회',
+    churchCode: '1002',
     emoji: '🕊️',
     color: Color(0xFF2E7D32),
     imagePath: 'assets/images/pastors/pastor_lee_jaehoon.png',
@@ -798,6 +750,7 @@ const _pastors = [
   _PastorData(
     name: '오정현 목사',
     church: '사랑의교회',
+    churchCode: '1009',
     emoji: '❤️',
     color: Color(0xFFC62828),
     imagePath: 'assets/images/pastors/pastor_oh_junghyun.png',
@@ -805,6 +758,7 @@ const _pastors = [
   _PastorData(
     name: '유기성 목사',
     church: '선한목자교회',
+    churchCode: '1003',
     emoji: '🌿',
     color: Color(0xFF00695C),
     imagePath: 'assets/images/pastors/pastor_yoo_kisung.png',
@@ -812,6 +766,7 @@ const _pastors = [
   _PastorData(
     name: '진재혁 목사',
     church: '지구촌교회',
+    churchCode: '1004',
     emoji: '🌏',
     color: Color(0xFF4527A0),
     imagePath: 'assets/images/pastors/pastor_jin_jaehyuk.png',
@@ -819,6 +774,7 @@ const _pastors = [
   _PastorData(
     name: '김은호 목사',
     church: '오륜교회',
+    churchCode: '1005',
     emoji: '🔥',
     color: Color(0xFFE65100),
     imagePath: 'assets/images/pastors/pastor_kim_eunho.png',
@@ -826,6 +782,7 @@ const _pastors = [
   _PastorData(
     name: '김삼환 목사',
     church: '명성교회',
+    churchCode: '1006',
     emoji: '⭐',
     color: Color(0xFFF57F17),
     imagePath: 'assets/images/pastors/pastor_kim_samhwan.png',
@@ -833,6 +790,7 @@ const _pastors = [
   _PastorData(
     name: '이영훈 목사',
     church: '여의도순복음',
+    churchCode: '1007',
     emoji: '🌊',
     color: Color(0xFF0277BD),
     imagePath: 'assets/images/pastors/pastor_lee_younghoon.png',
@@ -840,6 +798,7 @@ const _pastors = [
   _PastorData(
     name: '소강석 목사',
     church: '새에덴교회',
+    churchCode: '1008',
     emoji: '🌸',
     color: Color(0xFF6A1B9A),
     imagePath: 'assets/images/pastors/pastor_so_kangseok.png',

@@ -7,6 +7,7 @@ import '../../../data/models/sermon_model.dart';
 import '../../../data/models/user_progress_model.dart';
 import '../../../data/services/progress_service.dart';
 import '../../../data/services/activity_service.dart';
+import '../../../data/services/saved_sermon_service.dart';
 
 class GroupDevotionScreen extends StatefulWidget {
   final SermonModel sermon;
@@ -19,12 +20,40 @@ class GroupDevotionScreen extends StatefulWidget {
 
 class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
   final ProgressService _progressService = ProgressService();
+  final SavedSermonService _savedService = SavedSermonService();
   String? _userId;
+  bool _isSaved = false;
 
   @override
   void initState() {
     super.initState();
     _userId = FirebaseAuth.instance.currentUser?.uid;
+    _checkSaved();
+  }
+
+  Future<void> _checkSaved() async {
+    final saved = await _savedService.isSaved(widget.sermon.id);
+    if (mounted) setState(() => _isSaved = saved);
+  }
+
+  Future<void> _toggleSave() async {
+    if (_isSaved) {
+      await _savedService.unsaveSermon(widget.sermon.id);
+      if (mounted) {
+        setState(() => _isSaved = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('보관함에서 삭제되었습니다')),
+        );
+      }
+    } else {
+      await _savedService.saveSermon(widget.sermon);
+      if (mounted) {
+        setState(() => _isSaved = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('보관함에 저장되었습니다')),
+        );
+      }
+    }
   }
 
   void _share() {
@@ -69,6 +98,14 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(
+              _isSaved ? Icons.bookmark : Icons.bookmark_border,
+              color: _isSaved ? const Color(0xFF1565C0) : null,
+            ),
+            tooltip: _isSaved ? '보관함에서 삭제' : '보관함에 저장',
+            onPressed: _toggleSave,
+          ),
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: '공유하기',
