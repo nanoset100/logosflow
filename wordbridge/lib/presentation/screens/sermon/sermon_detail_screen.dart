@@ -45,6 +45,20 @@ https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
 
   @override
   Widget build(BuildContext context) {
+    // 데이터 검증 및 빈 화면 방어 (iPad 대응)
+    if (widget.sermon.summary.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('상세 내용')),
+        body: const Center(
+          child: Text(
+            '데이터를 불러오는 중이거나 내용이 없습니다.\n잠시 후 다시 시도해 주세요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

@@ -145,12 +145,6 @@ class _PrayerRequestsScreenState extends State<PrayerRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_uid == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('나의 기도제목')),
-        body: const Center(child: Text('로그인이 필요합니다')),
-      );
-    }
 
     return Scaffold(
       backgroundColor: AppColors.background,

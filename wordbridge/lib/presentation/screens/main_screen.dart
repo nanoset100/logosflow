@@ -166,27 +166,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 로그아웃 / 로그인 버튼
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton.icon(
-              onPressed: _logout,
-              icon: Icon(
-                _email == null ? Icons.login : Icons.logout, 
-                color: _email == null ? const Color(0xFF1565C0) : Colors.red,
-              ),
-              label: Text(
-                _email == null ? '로그인하러 가기' : '로그아웃', 
-                style: TextStyle(color: _email == null ? const Color(0xFF1565C0) : Colors.red),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 52),
-                side: BorderSide(color: _email == null ? const Color(0xFF1565C0) : Colors.red),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
         ],
       ),
     );

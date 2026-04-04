@@ -70,30 +70,16 @@ class _SermonListScreenState extends State<SermonListScreen> {
 
           if (snapshot.hasError) {
             final errorMsg = snapshot.error.toString();
-            if (errorMsg.contains('permission-denied')) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      '로그인이 필요합니다',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '설교를 보려면 교회 코드로 로그인해주세요',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-                    ),
-                  ],
-                ),
-              );
-            }
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                   SizedBox(height: 16),
+                   Text('데이터를 불러올 수 없습니다.'),
+                ],
+              ),
+            );
             return Center(
               child: Text('오류가 발생했습니다: ${snapshot.error}'),
             );
