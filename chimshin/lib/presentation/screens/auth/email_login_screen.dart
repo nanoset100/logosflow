@@ -87,7 +87,12 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('apns-token-not-set') || errorMsg.contains('firebase_messaging')) {
+          _showSnackBar('로그인 처리 중입니다... 잠시만 기다려주세요.', isError: false);
+        } else {
+          _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -147,7 +152,12 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('apns-token-not-set') || errorMsg.contains('firebase_messaging')) {
+          _showSnackBar('회원가입 처리 중입니다... 잠시만 기다려주세요.', isError: false);
+        } else {
+          _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

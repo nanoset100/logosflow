@@ -106,20 +106,25 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // FCM 토큰을 members 컬렉션에 동기화 (기도 알림 수신용)
         if (uid != null) {
-          final token = await FirebaseMessaging.instance.getToken();
-          if (token != null) {
-            await MemberService.syncFcmToken(
-              churchCode: code,
-              uid: uid,
-              fcmToken: token,
-            );
-            // 관리자면 church 문서에도 토큰 저장 (생일 알림 수신용)
-            if (adminResult) {
-              await MemberService.saveAdminToken(
+          try {
+            final token = await FirebaseMessaging.instance.getToken();
+            if (token != null) {
+              await MemberService.syncFcmToken(
                 churchCode: code,
+                uid: uid,
                 fcmToken: token,
               );
+              // 관리자면 church 문서에도 토큰 저장 (생일 알림 수신용)
+              if (adminResult) {
+                await MemberService.saveAdminToken(
+                  churchCode: code,
+                  fcmToken: token,
+                );
+              }
             }
+          } catch (e) {
+            // FCM 에러가 홈화면 데이터 로딩을 방해하지 않도록 무시
+            debugPrint('[FCM] 홈화면 토큰 동기화 무시된 에러: $e');
           }
         }
         if (mounted) {

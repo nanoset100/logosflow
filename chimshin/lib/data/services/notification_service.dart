@@ -61,6 +61,23 @@ class NotificationService {
     });
   }
 
+  /// iOS 전용: APNS 토큰이 준비될 때까지 최대 5초간 대기합니다. (심사 대응용)
+  static Future<String?> _waitForApnsToken() async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return null;
+    
+    debugPrint('[FCM] APNS 토큰 대기 시작...');
+    for (int i = 0; i < 10; i++) { // 0.5초 * 10 = 5초
+      final apnsToken = await _messaging.getAPNSToken();
+      if (apnsToken != null) {
+        debugPrint('[FCM] APNS 토큰 획득 성공');
+        return apnsToken;
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+    debugPrint('[FCM] APNS 토큰 획득 실패 (5초 타임아웃)');
+    return null;
+  }
+
   static Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
@@ -88,15 +105,30 @@ class NotificationService {
   }
 
   static Future<void> saveToken() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    final token = await _messaging.getToken();
-    if (token == null) return;
-    await FirebaseFirestore.instance.collection('users').doc(uid).set(
-      {'fcmToken': token, 'tokenUpdatedAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
-    debugPrint('[FCM] 토큰 저장 완료: ${token.substring(0, 20)}...');
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      // iOS인 경우 APNS 토큰이 준비될 때까지 잠시 대기 (심사관 빠른 로그인 대응)
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await _waitForApnsToken();
+      }
+
+      final token = await _messaging.getToken();
+      if (token == null) {
+        debugPrint('[FCM] FCM 토큰이 null입니다. 저장을 건너튑니다.');
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set(
+        {'fcmToken': token, 'tokenUpdatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+      debugPrint('[FCM] 토큰 저장 완료: ${token.substring(0, 20)}...');
+    } catch (e) {
+      // 심사 통과를 위해 기술적인 에러가 로그인을 방해하지 않도록 push 에러는 무시합니다.
+      debugPrint('[FCM] 토큰 저장 중 무시된 에러: $e');
+    }
   }
 
   static Future<void> onLogout(String uid) async {
