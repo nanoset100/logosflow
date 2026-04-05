@@ -69,19 +69,21 @@ class _SermonListScreenState extends State<SermonListScreen> {
           }
 
           if (snapshot.hasError) {
-            final errorMsg = snapshot.error.toString();
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                   SizedBox(height: 16),
-                   Text('데이터를 불러올 수 없습니다.'),
+                   const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                   const SizedBox(height: 16),
+                   const Text('데이터를 불러올 수 없습니다.'),
+                   const SizedBox(height: 8),
+                   Text(
+                     '${snapshot.error}',
+                     style: const TextStyle(fontSize: 12, color: Colors.grey),
+                     textAlign: TextAlign.center,
+                   ),
                 ],
               ),
-            );
-            return Center(
-              child: Text('오류가 발생했습니다: ${snapshot.error}'),
             );
           }
 

@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -64,7 +65,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
     final text =
         '📖 ${widget.sermon.title} - ${widget.sermon.pastor} 목사님\n\n$preview\n\n'
         '👉 구역 예배 5일 묵상 교재는 [말씀브릿지] 앱에서 무료로 확인하세요!\n'
-        'https://play.google.com/store/apps/details?id=com.logosflow.wordbridge';
+        '${Platform.isIOS ? "https://apps.apple.com/app/id6746543210" : "https://play.google.com/store/apps/details?id=com.logosflow.wordbridge"}';
     Share.share(text, subject: '${widget.sermon.title} - 구역 예배 교재');
   }
 

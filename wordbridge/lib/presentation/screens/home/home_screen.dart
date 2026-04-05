@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -92,11 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu_rounded, size: 26),
-        color: const Color(0xFF1A1A2E),
-        onPressed: () {},
-      ),
+      automaticallyImplyLeading: false,
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -372,6 +369,8 @@ class _CrossPromoSection extends StatelessWidget {
       color: Color(0xFF5C6BC0),
       playUrl:
           'https://play.google.com/store/apps/details?id=com.nanoset.repre_prayer_app',
+      iosUrl:
+          'https://apps.apple.com/app/id6745673820',
     ),
     _PromoApp(
       emoji: '📖',
@@ -380,6 +379,7 @@ class _CrossPromoSection extends StatelessWidget {
       color: Color(0xFF2E7D32),
       playUrl:
           'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible',
+      iosUrl: '',
     ),
   ];
 
@@ -419,13 +419,18 @@ class _PromoApp {
   final String description;
   final Color color;
   final String playUrl;
+  final String iosUrl;
   const _PromoApp({
     required this.emoji,
     required this.name,
     required this.description,
     required this.color,
     required this.playUrl,
+    this.iosUrl = '',
   });
+
+  String get storeUrl => Platform.isIOS && iosUrl.isNotEmpty ? iosUrl : playUrl;
+  String get storeName => Platform.isIOS ? 'App Store' : 'Play 스토어';
 }
 
 class _PromoCard extends StatelessWidget {
@@ -433,7 +438,7 @@ class _PromoCard extends StatelessWidget {
   const _PromoCard({required this.app});
 
   Future<void> _launch() async {
-    final uri = Uri.parse(app.playUrl);
+    final uri = Uri.parse(app.storeUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -499,11 +504,10 @@ class _PromoCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10),
-            // Play 스토어 링크
             Row(
               children: [
                 Text(
-                  'Play 스토어',
+                  app.storeName,
                   style: TextStyle(
                     fontSize: 11,
                     color: app.color,

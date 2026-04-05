@@ -13,9 +13,13 @@ class SermonService {
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => SermonModel.fromFirestore(doc))
-          .toList();
+      return snapshot.docs.map((doc) {
+        try {
+          return SermonModel.fromFirestore(doc);
+        } catch (e) {
+          return null;
+        }
+      }).whereType<SermonModel>().toList();
     });
   }
 

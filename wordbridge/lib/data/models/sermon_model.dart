@@ -31,18 +31,24 @@ class SermonModel {
   factory SermonModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
+    DateTime parseDate(dynamic value) {
+      if (value is Timestamp) return value.toDate();
+      if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+      return DateTime.now();
+    }
+
     return SermonModel(
       id: doc.id,
       churchCode: data['churchCode'] ?? '',
       title: data['title'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
+      date: parseDate(data['date']),
       pastor: data['pastor'] ?? '',
       bibleVerse: data['bibleVerse'] ?? '',
       summary: data['summary'] ?? '',
       audioUrl: data['audioUrl'],
       devotionals: Map<String, String>.from(data['devotionals'] ?? {}),
       keyPoints: List<String>.from(data['keyPoints'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: parseDate(data['createdAt']),
     );
   }
 

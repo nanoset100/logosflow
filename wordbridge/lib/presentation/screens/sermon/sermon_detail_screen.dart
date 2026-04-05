@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:share_plus/share_plus.dart';
@@ -32,7 +33,7 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
 $preview
 
 👉 더 깊은 내용과 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!
-https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
+${Platform.isIOS ? "https://apps.apple.com/app/id6746543210" : "https://play.google.com/store/apps/details?id=com.logosflow.chimshin"}''';
 
     Share.share(text, subject: '${sermon.title} - ${sermon.pastor} 목사님 설교');
   }
