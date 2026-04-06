@@ -146,6 +146,10 @@ class AuthService {
         if (e.code == AuthorizationErrorCode.canceled) return null;
         throw Exception('Apple 로그인 처리 중입니다... 다시 시도해주세요.');
       } on FirebaseAuthException catch (e) {
+        // Firebase 오류여도 실제로 로그인된 경우 성공 처리
+        final current = _auth.currentUser;
+        if (current != null) return current;
+
         if (e.code == 'invalid-credential' && retryCount == 0) {
           retryCount++;
           debugPrint('[Auth] Apple 로그인 credential 에러 발생 - 1회 재시도 중...');
