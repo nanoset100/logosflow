@@ -91,17 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       if (mounted) {
-        final errorMsg = e.toString().toLowerCase();
-        // APNS 토큰 미설정 등 기술적인 에러는 사용자에게 부드럽게 표시
-        if (errorMsg.contains('apns-token-not-set') ||
-            errorMsg.contains('firebase_messaging') ||
-            errorMsg.contains('invalid-credential') ||
-            errorMsg.contains('로그인 처리 중')) {
-          _showSnackBar('로그인 처리 중입니다... 잠시만 기다려주세요.');
-        } else {
-          _showSnackBar(e.toString().replaceAll('Exception: ', ''),
-              isError: true);
-        }
+        final errorMsg = e.toString().replaceAll('Exception: ', '');
+        _showSnackBar(errorMsg, isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

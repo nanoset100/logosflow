@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -140,11 +141,15 @@ class AuthService {
           rawNonce: rawNonce,
         );
 
-        final result = await _auth.signInWithCredential(oauthCredential);
+        final result = await _auth
+            .signInWithCredential(oauthCredential)
+            .timeout(const Duration(seconds: 20));
         return result.user;
+      } on TimeoutException {
+        throw Exception('로그인 시간이 초과되었습니다. 네트워크를 확인 후 다시 시도해주세요.');
       } on SignInWithAppleAuthorizationException catch (e) {
         if (e.code == AuthorizationErrorCode.canceled) return null;
-        throw Exception('Apple 로그인 처리 중입니다... 다시 시도해주세요.');
+        throw Exception('Apple 로그인에 실패했습니다. 다시 시도해주세요.');
       } on FirebaseAuthException catch (e) {
         // Firebase 오류여도 실제로 로그인된 경우 성공 처리
         final current = _auth.currentUser;
@@ -156,17 +161,17 @@ class AuthService {
           await Future.delayed(const Duration(seconds: 1));
           continue;
         }
-        throw Exception('로그인 처리 중입니다... 잠시 후 다시 시도해주세요.');
+        throw Exception('로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
       } catch (e) {
         final current = _auth.currentUser;
         if (current != null) return current;
-        
+
         if (retryCount == 0) {
           retryCount++;
           await Future.delayed(const Duration(seconds: 1));
           continue;
         }
-        throw Exception('로그인 처리 중입니다...');
+        throw Exception('로그인에 실패했습니다. 다시 시도해주세요.');
       }
     }
     return null;
