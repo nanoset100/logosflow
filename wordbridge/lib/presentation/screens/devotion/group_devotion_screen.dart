@@ -300,7 +300,8 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
                   ),
                 ),
               ),
-              );
+            ),
+          );
             } catch (_) {
               return Text(
                 widget.sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
