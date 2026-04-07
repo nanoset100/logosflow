@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -475,25 +476,7 @@ class _CtaButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-        onTap: () async {
-            final Uri emailLaunchUri = Uri(
-              scheme: 'mailto',
-              path: 'nanoset@naver.com',
-              queryParameters: {
-                'subject': '말씀브릿지 교회 추가 신청',
-              },
-            );
-            
-            if (await canLaunchUrl(emailLaunchUri)) {
-              await launchUrl(emailLaunchUri);
-            } else {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('메일 앱을 실행할 수 없습니다.')),
-                );
-              }
-            }
-          },
+          onTap: () => _showChurchRequestSheet(context),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding:
@@ -544,6 +527,131 @@ class _CtaButton extends StatelessWidget {
 }
 
 // ─── 목사님 데이터 ─────────────────────────────────
+// ─── 교회 추가 신청 바텀시트 ──────────────────────────
+void _showChurchRequestSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 핸들
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 24),
+          // 아이콘
+          Container(
+            width: 64, height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.church_outlined, size: 32, color: Color(0xFF1565C0)),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '우리 교회/목사님 추가 신청',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '아래 이메일로 신청해 주시면\n무료로 등록해 드립니다 🙏',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF757575), height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          // 이메일 카드
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF1565C0).withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('신청 이메일', style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E), fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.email_outlined, size: 20, color: Color(0xFF1565C0)),
+                    const SizedBox(width: 8),
+                    const Text('nanoset@naver.com',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(const ClipboardData(text: 'nanoset@naver.com'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('이메일이 복사되었습니다 📋'), duration: Duration(seconds: 2)),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1565C0),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('복사', style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 신청 내용 안내
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('📝 신청 시 포함할 내용', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF5D4037))),
+                SizedBox(height: 8),
+                Text('• 교회명\n• 목사님 성함\n• 교회 홈페이지 또는 유튜브 채널 URL',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF795548), height: 1.6)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // 닫기 버튼
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('닫기', style: TextStyle(color: Color(0xFF757575))),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _PastorData {
   final String name;
   final String church;
