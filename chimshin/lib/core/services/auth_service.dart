@@ -117,64 +117,54 @@ class AuthService {
   }
 
   Future<User?> signInWithApple() async {
-    int retryCount = 0;
-    while (retryCount < 2) {
-      try {
-        final rawNonce = _generateNonce();
-        final nonce = _sha256ofString(rawNonce);
+    try {
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
 
-        final appleCredential = await SignInWithApple.getAppleIDCredential(
-          scopes: [
-            AppleIDAuthorizationScopes.email,
-            AppleIDAuthorizationScopes.fullName
-          ],
-          nonce: nonce,
-        );
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName
+        ],
+        nonce: nonce,
+      );
 
-        final identityToken = appleCredential.identityToken;
-        if (identityToken == null) {
-          throw Exception('Apple 인증 토큰을 받지 못했습니다. 잠시 후 다시 시도해주세요.');
-        }
-
-        final oauthCredential = OAuthProvider('apple.com').credential(
-          idToken: identityToken,
-          rawNonce: rawNonce,
-        );
-
-        final result = await _auth
-            .signInWithCredential(oauthCredential)
-            .timeout(const Duration(seconds: 20));
-        return result.user;
-      } on TimeoutException {
-        throw Exception('로그인 시간이 초과되었습니다. 네트워크를 확인 후 다시 시도해주세요.');
-      } on SignInWithAppleAuthorizationException catch (e) {
-        if (e.code == AuthorizationErrorCode.canceled) return null;
-        throw Exception('Apple 로그인에 실패했습니다. 다시 시도해주세요.');
-      } on FirebaseAuthException catch (e) {
-        // Firebase 오류여도 실제로 로그인된 경우 성공 처리
-        final current = _auth.currentUser;
-        if (current != null) return current;
-
-        if (e.code == 'invalid-credential' && retryCount == 0) {
-          retryCount++;
-          debugPrint('[Auth] Apple 로그인 credential 에러 발생 - 1회 재시도 중...');
-          await Future.delayed(const Duration(seconds: 1));
-          continue;
-        }
-        throw Exception('로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
-      } catch (e) {
-        final current = _auth.currentUser;
-        if (current != null) return current;
-
-        if (retryCount == 0) {
-          retryCount++;
-          await Future.delayed(const Duration(seconds: 1));
-          continue;
-        }
-        throw Exception('로그인에 실패했습니다. 다시 시도해주세요.');
+      final identityToken = appleCredential.identityToken;
+      if (identityToken == null) {
+        throw Exception('Apple 인증 토큰을 받지 못했습니다. 잠시 후 다시 시도해주세요.');
       }
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: identityToken,
+        rawNonce: rawNonce,
+      );
+
+      final result = await _auth
+          .signInWithCredential(oauthCredential)
+          .timeout(const Duration(seconds: 30));
+
+      // Firebase 오류여도 실제로 로그인된 경우 성공 처리
+      return result.user ?? _auth.currentUser;
+    } on TimeoutException {
+      throw Exception('로그인 시간이 초과되었습니다. 네트워크를 확인 후 다시 시도해주세요.');
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) return null;
+      debugPrint('[Auth] SignInWithAppleAuthorizationException: ${e.code} - ${e.message}');
+      throw Exception('Apple 로그인에 실패했습니다. (${e.code})');
+    } on FirebaseAuthException catch (e) {
+      // Firebase 오류여도 실제로 로그인된 경우 성공 처리
+      final current = _auth.currentUser;
+      if (current != null) return current;
+
+      debugPrint('[Auth] FirebaseAuthException: code=${e.code}, msg=${e.message}');
+      throw Exception('Apple 로그인 오류 (${e.code}): ${e.message ?? '다시 시도해주세요'}');
+    } catch (e) {
+      final current = _auth.currentUser;
+      if (current != null) return current;
+
+      debugPrint('[Auth] signInWithApple unknown error: $e');
+      throw Exception('로그인에 실패했습니다. 다시 시도해주세요.');
     }
-    return null;
   }
 
   // ─── 비밀번호 재설정 ─────────────────────────────
