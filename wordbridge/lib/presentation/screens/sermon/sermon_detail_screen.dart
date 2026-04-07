@@ -32,7 +32,7 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
 $preview
 
 👉 더 깊은 내용과 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!
-https://play.google.com/store/apps/details?id=com.logosflow.chimshin''';
+https://apps.apple.com/app/id6744803990''';
 
     Share.share(text, subject: '${sermon.title} - ${sermon.pastor} 목사님 설교');
   }

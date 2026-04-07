@@ -64,7 +64,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
     final text =
         '📖 ${widget.sermon.title} - ${widget.sermon.pastor} 목사님\n\n$preview\n\n'
         '👉 구역 예배 5일 묵상 교재는 [말씀브릿지] 앱에서 무료로 확인하세요!\n'
-        'https://play.google.com/store/apps/details?id=com.logosflow.wordbridge';
+        'https://apps.apple.com/app/id6744803990';
     Share.share(text, subject: '${widget.sermon.title} - 구역 예배 교재');
   }
 

@@ -46,10 +46,16 @@ class SermonModel {
       bibleVerse: data['bibleVerse'] ?? '',
       summary: data['summary'] ?? '',
       audioUrl: data['audioUrl'],
-      devotionals: Map<String, String>.from(data['devotionals'] ?? {}),
+      devotionals: _parseDevotionals(data['devotionals']),
       keyPoints: List<String>.from(data['keyPoints'] ?? []),
       createdAt: parseDate(data['createdAt']),
     );
+  }
+
+  static Map<String, String> _parseDevotionals(dynamic raw) {
+    if (raw == null) return {};
+    if (raw is! Map) return {};
+    return raw.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
   }
 
   // Firestore에 저장

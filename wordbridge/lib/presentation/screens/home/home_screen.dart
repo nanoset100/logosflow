@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../admin/sermon_register_screen.dart';
 import '../admin/members_screen.dart';
 import '../sermon/sermon_list_screen.dart';
 import '../../../data/services/admin_service.dart';
 import '../../../data/services/member_service.dart';
-import '../../../data/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -228,8 +226,6 @@ class _WordBridgeHomeBody extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
-        // 4. 크로스 프로모션
-        const _CrossPromoSection(),
         const SizedBox(height: 32),
       ],
     );
@@ -356,167 +352,6 @@ class _DailyWordBanner extends StatelessWidget {
   }
 }
 
-// ─── 크로스 프로모션 섹션 ─────────────────────────────
-class _CrossPromoSection extends StatelessWidget {
-  const _CrossPromoSection();
-
-  static const _apps = [
-    _PromoApp(
-      emoji: '🙏',
-      name: '대표기도',
-      description: 'AI가 대신 드리는 대표 기도',
-      color: Color(0xFF5C6BC0),
-      playUrl:
-          'https://play.google.com/store/apps/details?id=com.nanoset.repre_prayer_app',
-    ),
-    _PromoApp(
-      emoji: '📖',
-      name: '왕초보 성경통독',
-      description: '쉽게 읽는 성경 완독 챌린지',
-      color: Color(0xFF2E7D32),
-      playUrl:
-          'https://play.google.com/store/apps/details?id=com.bible_app.king_beginner_bible',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '🙏 함께 쓰면 더 좋은 앱',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF9E9E9E),
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _PromoCard(app: _apps[0])),
-              const SizedBox(width: 12),
-              Expanded(child: _PromoCard(app: _apps[1])),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PromoApp {
-  final String emoji;
-  final String name;
-  final String description;
-  final Color color;
-  final String playUrl;
-  const _PromoApp({
-    required this.emoji,
-    required this.name,
-    required this.description,
-    required this.color,
-    required this.playUrl,
-  });
-}
-
-class _PromoCard extends StatelessWidget {
-  final _PromoApp app;
-  const _PromoCard({required this.app});
-
-  Future<void> _launch() async {
-    final uri = Uri.parse(app.playUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _launch,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 아이콘 원형 배경
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: app.color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(app.emoji,
-                    style: const TextStyle(fontSize: 20)),
-              ),
-            ),
-            const SizedBox(height: 10),
-            // 앱 이름
-            Text(
-              app.name,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1A1A2E),
-                letterSpacing: -0.3,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            // 설명
-            Text(
-              app.description,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF757575),
-                height: 1.4,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            // Play 스토어 링크
-            Row(
-              children: [
-                Text(
-                  'Play 스토어',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: app.color,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Icon(Icons.arrow_forward_ios_rounded,
-                    size: 10, color: app.color),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ─── 목사님 카드 ──────────────────────────────────
 class _PastorCard extends StatelessWidget {
