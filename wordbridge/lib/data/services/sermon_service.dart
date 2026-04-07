@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sermon_model.dart';
 
 class SermonService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   // 교회의 설교 목록 가져오기 (최신순)
   Stream<List<SermonModel>> getSermons(String churchCode) {

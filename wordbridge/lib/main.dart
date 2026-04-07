@@ -17,8 +17,26 @@ void main() {
 
     try {
       await Firebase.initializeApp();
+      debugPrint('[main] Firebase 초기화 성공');
     } catch (e) {
       debugPrint('[main] Firebase 초기화 실패: $e');
+      // Firebase 초기화 실패 시 앱 실행 중단
+      runApp(MaterialApp(
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Firebase 초기화 실패\n$e',
+                style: const TextStyle(color: Colors.red, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ));
+      return;
     }
 
     try {
