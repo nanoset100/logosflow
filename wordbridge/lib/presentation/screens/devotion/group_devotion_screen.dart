@@ -259,9 +259,11 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          MarkdownBody(
-            data: widget.sermon.summary,
-            styleSheet: MarkdownStyleSheet(
+          Builder(builder: (context) {
+            try {
+              return MarkdownBody(
+                data: widget.sermon.summary,
+                styleSheet: MarkdownStyleSheet(
               p: const TextStyle(
                 fontSize: 16,
                 color: AppColors.textPrimary,
@@ -298,8 +300,14 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
                   ),
                 ),
               ),
-            ),
-          ),
+              );
+            } catch (_) {
+              return Text(
+                widget.sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
+                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.75),
+              );
+            }
+          }),
         ],
       ),
     );

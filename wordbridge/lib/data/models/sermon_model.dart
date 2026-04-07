@@ -47,7 +47,7 @@ class SermonModel {
       summary: data['summary'] ?? '',
       audioUrl: data['audioUrl'],
       devotionals: _parseDevotionals(data['devotionals']),
-      keyPoints: List<String>.from(data['keyPoints'] ?? []),
+      keyPoints: _parseKeyPoints(data['keyPoints']),
       createdAt: parseDate(data['createdAt']),
     );
   }
@@ -101,10 +101,16 @@ class SermonModel {
       bibleVerse: data['bibleVerse'] ?? '',
       summary: data['summary'] ?? '',
       audioUrl: data['audioUrl'],
-      devotionals: Map<String, String>.from(data['devotionals'] ?? {}),
-      keyPoints: List<String>.from(data['keyPoints'] ?? []),
+      devotionals: _parseDevotionals(data['devotionals']),
+      keyPoints: _parseKeyPoints(data['keyPoints']),
       createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt'] ?? 0),
     );
+  }
+
+  static List<String> _parseKeyPoints(dynamic raw) {
+    if (raw == null) return [];
+    if (raw is! List) return [];
+    return raw.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
   }
 
   // 날짜 포맷 (2026년 2월 23일)

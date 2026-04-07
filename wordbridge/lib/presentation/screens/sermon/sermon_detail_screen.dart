@@ -516,31 +516,24 @@ class _SummaryTabState extends State<_SummaryTab> {
             ),
           ),
           const SizedBox(height: 12),
-          MarkdownBody(
-            data: widget.sermon.summary,
-            styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-                height: 1.7,
-              ),
-              strong: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-              h3: const TextStyle(
-                fontSize: 17,
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                height: 2.0,
-              ),
-              listBullet: const TextStyle(
-                fontSize: 16,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          Builder(builder: (context) {
+            try {
+              return MarkdownBody(
+                data: widget.sermon.summary,
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.7),
+                  strong: const TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                  h3: const TextStyle(fontSize: 17, color: AppColors.primary, fontWeight: FontWeight.bold, height: 2.0),
+                  listBullet: const TextStyle(fontSize: 16, color: AppColors.primary),
+                ),
+              );
+            } catch (_) {
+              return Text(
+                widget.sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
+                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.7),
+              );
+            }
+          }),
 
           const SizedBox(height: 24),
 
