@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/colors.dart';
@@ -259,59 +258,91 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Builder(builder: (context) {
-            try {
-              return MarkdownBody(
-                data: widget.sermon.summary,
-                styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-                height: 1.75,
-              ),
-              strong: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-              h3: const TextStyle(
-                fontSize: 17,
-                color: Color(0xFF3949AB),
-                fontWeight: FontWeight.bold,
-                height: 2.2,
-              ),
-              listBullet: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF3949AB),
-              ),
-              blockquote: const TextStyle(
-                fontSize: 15,
-                color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
-                height: 1.6,
-              ),
-              blockquoteDecoration: BoxDecoration(
-                color: const Color(0xFF3949AB).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border(
-                  left: BorderSide(
-                    color: const Color(0xFF3949AB).withValues(alpha: 0.4),
-                    width: 3,
-                  ),
-                ),
-              ),
-            ),
-          );
-            } catch (_) {
-              return Text(
-                widget.sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
-                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.75),
-              );
-            }
-          }),
+          _buildMarkdownWidget(widget.sermon.summary),
         ],
       ),
     );
+  }
+
+  // ─── 마크다운 직접 렌더러 (MarkdownBody 대체) ──────
+  Widget _buildMarkdownWidget(String data) {
+    final lines = data.split('\n');
+    final widgets = <Widget>[];
+    for (final raw in lines) {
+      final line = raw.trim();
+      if (line.isEmpty) {
+        widgets.add(const SizedBox(height: 6));
+        continue;
+      }
+      if (line.startsWith('### ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(4),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                  color: Color(0xFF3949AB), height: 1.5)),
+        ));
+      } else if (line.startsWith('## ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(3),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  color: Color(0xFF3949AB), height: 1.5)),
+        ));
+      } else if (line.startsWith('# ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(2),
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold,
+                  color: Color(0xFF3949AB), height: 1.5)),
+        ));
+      } else if (line.startsWith('> ')) {
+        widgets.add(Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3949AB).withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border(left: BorderSide(
+                color: const Color(0xFF3949AB).withValues(alpha: 0.4), width: 3)),
+          ),
+          child: _buildInlineText(line.substring(2),
+              const TextStyle(fontSize: 15, color: AppColors.textSecondary,
+                  fontStyle: FontStyle.italic, height: 1.6)),
+        ));
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        final content = line.substring(2);
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ', style: TextStyle(fontSize: 16,
+                color: Color(0xFF3949AB), height: 1.75)),
+            Expanded(child: _buildInlineText(content,
+                const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.75))),
+          ]),
+        ));
+      } else {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: _buildInlineText(line,
+              const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.75)),
+        ));
+      }
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: widgets);
+  }
+
+  Widget _buildInlineText(String text, TextStyle base) {
+    if (!text.contains('**')) return Text(text, style: base);
+    final spans = <TextSpan>[];
+    final regex = RegExp(r'\*\*(.*?)\*\*');
+    int last = 0;
+    for (final m in regex.allMatches(text)) {
+      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start), style: base));
+      spans.add(TextSpan(text: m.group(1), style: base.copyWith(fontWeight: FontWeight.bold)));
+      last = m.end;
+    }
+    if (last < text.length) spans.add(TextSpan(text: text.substring(last), style: base));
+    return RichText(text: TextSpan(children: spans));
   }
 
   // ─── 5일 묵상 나눔 ────────────────────────────────

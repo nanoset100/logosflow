@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
@@ -22,6 +21,87 @@ class SermonDetailScreen extends StatefulWidget {
 }
 
 class _SermonDetailScreenState extends State<SermonDetailScreen> {
+  // ─── 마크다운 직접 렌더러 (MarkdownBody 대체) ──────
+  Widget _buildMarkdownWidget(String data) {
+    final lines = data.split('\n');
+    final widgets = <Widget>[];
+    for (final raw in lines) {
+      final line = raw.trim();
+      if (line.isEmpty) {
+        widgets.add(const SizedBox(height: 6));
+        continue;
+      }
+      if (line.startsWith('### ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(4),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold,
+                  color: AppColors.primary, height: 1.5)),
+        ));
+      } else if (line.startsWith('## ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(3),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  color: AppColors.primary, height: 1.5)),
+        ));
+      } else if (line.startsWith('# ')) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 2),
+          child: Text(line.substring(2),
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold,
+                  color: AppColors.primary, height: 1.5)),
+        ));
+      } else if (line.startsWith('> ')) {
+        widgets.add(Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border(left: BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.4), width: 3)),
+          ),
+          child: _buildInlineText(line.substring(2),
+              const TextStyle(fontSize: 15, color: AppColors.textSecondary,
+                  fontStyle: FontStyle.italic, height: 1.6)),
+        ));
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        final content = line.substring(2);
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('• ', style: TextStyle(fontSize: 16,
+                color: AppColors.primary, height: 1.75)),
+            Expanded(child: _buildInlineText(content,
+                const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.75))),
+          ]),
+        ));
+      } else {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: _buildInlineText(line,
+              const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.7)),
+        ));
+      }
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: widgets);
+  }
+
+  Widget _buildInlineText(String text, TextStyle base) {
+    if (!text.contains('**')) return Text(text, style: base);
+    final spans = <TextSpan>[];
+    final regex = RegExp(r'\*\*(.*?)\*\*');
+    int last = 0;
+    for (final m in regex.allMatches(text)) {
+      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start), style: base));
+      spans.add(TextSpan(text: m.group(1), style: base.copyWith(fontWeight: FontWeight.bold)));
+      last = m.end;
+    }
+    if (last < text.length) spans.add(TextSpan(text: text.substring(last), style: base));
+    return RichText(text: TextSpan(children: spans));
+  }
+
   void _shareSermon(SermonModel sermon) {
     final preview = sermon.summary.length > 150
         ? '${sermon.summary.substring(0, 150)}...'
@@ -516,24 +596,7 @@ class _SummaryTabState extends State<_SummaryTab> {
             ),
           ),
           const SizedBox(height: 12),
-          Builder(builder: (context) {
-            try {
-              return MarkdownBody(
-                data: widget.sermon.summary,
-                styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.7),
-                  strong: const TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                  h3: const TextStyle(fontSize: 17, color: AppColors.primary, fontWeight: FontWeight.bold, height: 2.0),
-                  listBullet: const TextStyle(fontSize: 16, color: AppColors.primary),
-                ),
-              );
-            } catch (_) {
-              return Text(
-                widget.sermon.summary.replaceAll(RegExp(r'[#*_`>]'), '').trim(),
-                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, height: 1.7),
-              );
-            }
-          }),
+          _buildMarkdownWidget(widget.sermon.summary),
 
           const SizedBox(height: 24),
 
