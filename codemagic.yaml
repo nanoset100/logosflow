@@ -71,6 +71,49 @@ workflows:
 
 
   # ─────────────────────────────────────────────
+  # 말씀브릿지 - Android Google Play 배포
+  # Package: com.logosflow.wordbridge
+  # ─────────────────────────────────────────────
+  wordbridge-android-release:
+    name: WordBridge Android Release
+    max_build_duration: 60
+    working_directory: wordbridge
+
+    environment:
+      flutter: stable
+      groups:
+        - wordbridge        # Codemagic 환경변수 그룹
+                            # 필요 변수: KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
+      vars:
+        WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
+
+    scripts:
+      - name: key.properties 생성
+        script: |
+          cat > android/key.properties <<EOF
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=app/upload-keystore.jks
+          EOF
+
+      - name: .env 파일 생성
+        script: |
+          echo "FLAVOR=wordbridge" > .env
+          echo "APP_NAME=말씀브릿지" >> .env
+          echo "WHISPER_SERVER_URL=$WHISPER_SERVER_URL" >> .env
+
+      - name: Flutter pub get
+        script: flutter pub get
+
+      - name: Flutter build AAB
+        script: flutter build appbundle --release --no-pub
+
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+
+
+  # ─────────────────────────────────────────────
   # 말씀브릿지 - iOS App Store 배포
   # Bundle ID: com.logosflow.wordbridge
   # Team ID:   NCB9774DGY
