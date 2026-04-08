@@ -88,13 +88,17 @@ workflows:
         WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
 
     scripts:
+      - name: keystore 복원
+        script: |
+          echo "$KEYSTORE_FILE" | base64 --decode > android/app/upload-keystore.jks
+
       - name: key.properties 생성
         script: |
           cat > android/key.properties <<EOF
           storePassword=$STORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=app/upload-keystore.jks
+          storeFile=upload-keystore.jks
           EOF
 
       - name: .env 파일 생성
