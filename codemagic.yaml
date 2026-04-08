@@ -88,6 +88,10 @@ workflows:
         WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
 
     scripts:
+      - name: google-services.json 복원
+        script: |
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+
       - name: key.properties 생성
         script: |
           cat > android/key.properties <<EOF
