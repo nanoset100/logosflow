@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_progress_model.dart';
 
 class ProgressService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   String _docId(String userId, String sermonId) => '${userId}_$sermonId';
 
