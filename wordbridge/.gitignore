@@ -45,7 +45,7 @@ app.*.map.json
 /android/app/release
 
 # Firebase
-google-services.json
+# google-services.json  # Android: git에 포함 (Codemagic 빌드용)
 GoogleService-Info.plist
 
 # 환경변수

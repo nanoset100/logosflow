@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "69323558263",
+    "project_id": "chimshin-bible-note",
+    "storage_bucket": "chimshin-bible-note.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69323558263:android:6efc7ac078ecbebdd9e572",
+        "android_client_info": {
+          "package_name": "com.logosflow.chimshin_bible_note"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69323558263-8kapqagqici59o1qvc1390ojuvk0pts9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNmEKlzPI4Ft7H9Hd4gOSsQf1ymKxnPxE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "69323558263-8kapqagqici59o1qvc1390ojuvk0pts9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "69323558263-igolba302p8kc6h023t3k1v2rhhnmevh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.logosflow.chimshinBibleNote"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69323558263:android:7ea842cfcb849945d9e572",
+        "android_client_info": {
+          "package_name": "com.logosflow.wordbridge"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69323558263-8kapqagqici59o1qvc1390ojuvk0pts9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNmEKlzPI4Ft7H9Hd4gOSsQf1ymKxnPxE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "69323558263-8kapqagqici59o1qvc1390ojuvk0pts9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "69323558263-igolba302p8kc6h023t3k1v2rhhnmevh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.logosflow.chimshinBibleNote"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
