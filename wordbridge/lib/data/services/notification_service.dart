@@ -11,7 +11,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class NotificationService {
-  static final _messaging = FirebaseMessaging.instance;
+  static FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   static final _localNotifications = FlutterLocalNotificationsPlugin();
 
   static const _channelId = 'wordbridge_main';

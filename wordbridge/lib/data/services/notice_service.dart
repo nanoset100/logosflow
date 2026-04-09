@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/notice_model.dart';
 
 class NoticeService {
-  final _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   // ─── 인메모리 로컬 교회 공지 (시연용) ────────────────
   // 실제 배포 시엔 Firestore에만 저장하고 스트림으로 구독

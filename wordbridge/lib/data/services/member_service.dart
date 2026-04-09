@@ -57,7 +57,7 @@ class MemberModel {
 }
 
 class MemberService {
-  static final _firestore = FirebaseFirestore.instance;
+  static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   static Stream<List<MemberModel>> membersStream(String churchCode) {
     return _firestore

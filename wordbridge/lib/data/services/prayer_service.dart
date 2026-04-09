@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/prayer_request_model.dart';
 
 class PrayerService {
-  final _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   CollectionReference _col(String uid) =>
       _db.collection('users').doc(uid).collection('prayer_requests');

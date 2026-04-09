@@ -1,7 +1,7 @@
 name: wordbridge
 description: 말씀브릿지 - 인기 목회자 설교와 말씀 묵상 플랫폼
 publish_to: 'none'
-version: 1.0.1+135
+version: 1.0.1+136
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
