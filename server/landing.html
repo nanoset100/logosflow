@@ -1061,69 +1061,6 @@
       color: var(--text-hint);
     }
 
-    /* ─── 경쟁사 비교 ─── */
-    .compare {
-      background: var(--bg);
-    }
-
-    .compare-table {
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    .compare-table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .compare-table th {
-      padding: 14px 16px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      background: var(--bg);
-      color: var(--text-primary);
-      border-bottom: 2px solid rgba(0, 0, 0, 0.06);
-    }
-
-    .compare-table th.highlight {
-      background: var(--primary);
-      color: white;
-    }
-
-    .compare-table td {
-      padding: 12px 16px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-secondary);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-    }
-
-    .compare-table td.feature-name {
-      text-align: left;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .compare-table td.highlight {
-      background: rgba(21, 101, 192, 0.03);
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    .check {
-      color: var(--success);
-      font-weight: 700;
-    }
-
-    .cross {
-      color: #ccc;
-    }
-
     /* ─── 사용 흐름 ─── */
     .flow {
       background: white;
@@ -1451,10 +1388,6 @@
         grid-template-columns: 1fr;
       }
 
-      .compare-table {
-        overflow-x: auto;
-      }
-
       .section-title h2 {
         font-size: 24px;
       }
@@ -1470,6 +1403,114 @@
       .pd-stats {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
+      }
+
+      /* AI 샘플 섹션 모바일 */
+      .ai-sample-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+      }
+
+      .ai-sample-section {
+        padding: 48px 16px !important;
+      }
+
+      .ai-sample-section .section-title h2 {
+        font-size: 22px;
+        line-height: 1.5;
+      }
+
+      .ai-sample-section .section-title p {
+        font-size: 14px;
+      }
+
+      /* 탭 버튼 모바일 가독성 */
+      .s-tab {
+        font-size: 11px !important;
+        padding: 10px 2px !important;
+      }
+
+      /* 시나리오 타임라인 모바일 */
+      .scenario-item {
+        gap: 14px;
+      }
+
+      .scenario-dot {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        font-size: 18px;
+      }
+
+      .scenario-timeline::before {
+        left: 22px;
+      }
+
+      .scenario-content {
+        padding: 16px;
+      }
+
+      .scenario-content h4 {
+        font-size: 14px;
+      }
+
+      /* 섹션 여백 조정 */
+      section {
+        padding: 56px 16px;
+      }
+
+      .section-title {
+        margin-bottom: 36px;
+      }
+
+      /* 히어로 서브텍스트 */
+      .hero-sub {
+        font-size: 12px;
+      }
+
+      /* 문제 정의 모바일 */
+      .problem-left h3 {
+        font-size: 22px;
+      }
+
+      .problem-stat .num {
+        font-size: 28px;
+      }
+
+      /* 묵상/구역/목사 섹션 제목 모바일 */
+      .devotion-left h3,
+      .district-right h3,
+      .pastor-left h3 {
+        font-size: 22px;
+      }
+
+      /* 비전 섹션 모바일 */
+      .vision h2 {
+        font-size: 26px;
+      }
+
+      .vision > .section-inner > p {
+        font-size: 14px;
+      }
+
+      /* 통계 배너 모바일 */
+      .stats-bar {
+        padding: 20px 16px;
+      }
+
+      .stat-item p {
+        font-size: 11px;
+      }
+
+      /* FAQ 모바일 */
+      .faq-q {
+        font-size: 14px;
+        padding: 14px 18px;
+      }
+
+      /* 등록 박스 모바일 */
+      .register-box h3 {
+        font-size: 20px;
       }
     }
 
@@ -1510,7 +1551,6 @@
   <!-- 히어로 -->
   <section class="hero">
     <div class="hero-content">
-      <div class="hero-badge">+ 침례신학대학교 공식 파트너</div>
       <h1>
         주일 설교가<br>
         <span>평일의 삶</span>으로 이어지다
@@ -1996,7 +2036,7 @@
   <!-- ═══════════════════════════════════════ -->
   <!-- AI 설교 샘플 섹션 -->
   <!-- ═══════════════════════════════════════ -->
-  <section style="background: linear-gradient(135deg, #F0F7FF 0%, #E8F0FE 100%); padding: 80px 24px;" id="sample">
+  <section class="ai-sample-section" style="background: linear-gradient(135deg, #F0F7FF 0%, #E8F0FE 100%); padding: 80px 24px;" id="sample">
     <div class="section-inner">
       <div class="section-title fade-up">
         <div
@@ -2009,7 +2049,7 @@
 
       <div class="fade-up" style="max-width:960px;margin:0 auto;">
         <!-- 입력 → 출력 레이아웃 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+        <div class="ai-sample-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
 
           <!-- 좌측: 입력 (원본 설교) -->
           <div>
@@ -2470,88 +2510,6 @@
     </div>
   </section>
 
-  <!-- 경쟁사 비교 -->
-  <section class="compare" id="compare">
-    <div class="section-inner">
-      <div class="section-title">
-        <h2>왜 침신 설교노트인가?</h2>
-        <p>한국에 유일한 "내 교회 설교" 기반 AI 묵상 앱</p>
-      </div>
-      <div class="compare-table fade-up">
-        <table>
-          <thead>
-            <tr>
-              <th>기능</th>
-              <th>갓피플</th>
-              <th>QT 앱들</th>
-              <th>유튜브</th>
-              <th>카카오톡</th>
-              <th class="highlight">침신 설교노트</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="feature-name">내 교회 설교 연동</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">AI 설교 요약</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">5일 묵상 가이드</td>
-              <td class="cross">&#10005;</td>
-              <td class="check">&#10003;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">구역 예배 교재 생성</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">목사 대시보드</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">교인 기도 알림</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td>&#9651;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-            <tr>
-              <td class="feature-name">성장 추적 & 배지</td>
-              <td class="cross">&#10005;</td>
-              <td>&#9651;</td>
-              <td class="cross">&#10005;</td>
-              <td class="cross">&#10005;</td>
-              <td class="highlight check">&#10003;</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
   <!-- 사용 흐름 -->
   <section class="flow" id="flow">
     <div class="section-inner">
@@ -2646,8 +2604,7 @@
           </div>
         </div>
         <p style="margin-top: 24px; font-size: 14px; color: var(--text-hint);">
-          현재 침례교단 교회를 대상으로 무료 서비스 중이며,<br>
-          침례신학대학교 공식 파트너로 운영됩니다.
+          현재 침례교단 교회를 대상으로 무료 서비스 중입니다.
         </p>
         <div
           style="margin-top: 28px; background: white; border-radius: 14px; padding: 20px 28px; display: inline-block; border: 1.5px solid rgba(21,101,192,0.15);">
@@ -2751,7 +2708,7 @@
     <div class="footer-inner">
       <h4>+ 침신 설교노트</h4>
       <p>AI 말씀비서와 함께하는 신앙 성장</p>
-      <p style="margin-top: 4px; font-size: 12px;">침례신학대학교 공식 파트너</p>
+      <p style="margin-top: 4px; font-size: 12px;">AI 말씀비서 · LogosFlow</p>
       <div class="footer-divider"></div>
       <p>문의: <a href="mailto:nanoset@naver.com">nanoset@naver.com</a></p>
       <div class="footer-divider"></div>
