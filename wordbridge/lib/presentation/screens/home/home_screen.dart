@@ -688,7 +688,7 @@ const _pastors = [
   _PastorData(
     name: '오정현 목사',
     church: '사랑의교회',
-    churchCode: '1009',
+    churchCode: '1003',
     emoji: '❤️',
     color: Color(0xFFC62828),
     imagePath: 'assets/images/pastors/pastor_oh_junghyun.png',
@@ -696,7 +696,7 @@ const _pastors = [
   _PastorData(
     name: '유기성 목사',
     church: '선한목자교회',
-    churchCode: '1003',
+    churchCode: '1004',
     emoji: '🌿',
     color: Color(0xFF00695C),
     imagePath: 'assets/images/pastors/pastor_yoo_kisung.png',
@@ -704,7 +704,7 @@ const _pastors = [
   _PastorData(
     name: '진재혁 목사',
     church: '지구촌교회',
-    churchCode: '1004',
+    churchCode: '1005',
     emoji: '🌏',
     color: Color(0xFF4527A0),
     imagePath: 'assets/images/pastors/pastor_jin_jaehyuk.png',
@@ -712,7 +712,7 @@ const _pastors = [
   _PastorData(
     name: '김은호 목사',
     church: '오륜교회',
-    churchCode: '1005',
+    churchCode: '1006',
     emoji: '🔥',
     color: Color(0xFFE65100),
     imagePath: 'assets/images/pastors/pastor_kim_eunho.png',
@@ -720,7 +720,7 @@ const _pastors = [
   _PastorData(
     name: '김삼환 목사',
     church: '명성교회',
-    churchCode: '1006',
+    churchCode: '1007',
     emoji: '⭐',
     color: Color(0xFFF57F17),
     imagePath: 'assets/images/pastors/pastor_kim_samhwan.png',
@@ -728,7 +728,7 @@ const _pastors = [
   _PastorData(
     name: '이영훈 목사',
     church: '여의도순복음',
-    churchCode: '1007',
+    churchCode: '1008',
     emoji: '🌊',
     color: Color(0xFF0277BD),
     imagePath: 'assets/images/pastors/pastor_lee_younghoon.png',
@@ -736,7 +736,7 @@ const _pastors = [
   _PastorData(
     name: '소강석 목사',
     church: '새에덴교회',
-    churchCode: '1008',
+    churchCode: '1009',
     emoji: '🌸',
     color: Color(0xFF6A1B9A),
     imagePath: 'assets/images/pastors/pastor_so_kangseok.png',
