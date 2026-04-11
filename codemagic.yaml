@@ -144,6 +144,12 @@ workflows:
         WHISPER_SERVER_URL: "https://logosflow-production.up.railway.app"
 
     scripts:
+      - name: GoogleService-Info.plist 복원
+        script: |
+          echo "$GOOGLESERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+          echo "=== GoogleService-Info.plist restored ==="
+          ls -la ios/Runner/GoogleService-Info.plist
+
       - name: .env 파일 생성
         script: |
           echo "FLAVOR=wordbridge" > .env
@@ -153,6 +159,13 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
 
+      - name: iOS 빌드에서 kakao_flutter_sdk 제거 (미사용 SDK)
+        script: |
+          # GeneratedPluginRegistrant.m에서 KakaoFlutterSdkCommonPlugin 관련 코드를 안전하게 제거
+          sed -i '' '/#if __has_include(<kakao_flutter_sdk_common\/KakaoFlutterSdkCommonPlugin\.h>)/,/#endif/d' ios/Runner/GeneratedPluginRegistrant.m
+          sed -i '' '/KakaoFlutterSdkCommonPlugin registerWithRegistrar/d' ios/Runner/GeneratedPluginRegistrant.m
+          echo "=== kakao_flutter_sdk removed from GeneratedPluginRegistrant.m ==="
+          cat ios/Runner/GeneratedPluginRegistrant.m
 
       - name: Fix -G flag (gRPC-Core arm64 incompatibility)
         script: |

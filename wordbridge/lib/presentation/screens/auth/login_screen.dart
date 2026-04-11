@@ -72,11 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _loginWithKakao() {
-    if (_churchData == null) {
-      _showSnackBar('먼저 교회 코드를 확인해주세요', isError: true);
-      return;
-    }
-    _showSnackBar('카카오 로그인은 준비 중입니다');
+    _showSnackBar('카카오 로그인은 준비 중입니다. 이메일로 로그인해 주세요.');
   }
 
   void _goToSignUp() {

@@ -1,7 +1,7 @@
 name: wordbridge
 description: 말씀브릿지 - 인기 목회자 설교와 말씀 묵상 플랫폼
 publish_to: 'none'
-version: 1.0.1+138
+version: 1.0.2+139
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -38,8 +38,8 @@ dependencies:
   # 푸시 알림 (포그라운드 배너)
   flutter_local_notifications: ^17.2.3
 
-  # 카카오 로그인
-  kakao_flutter_sdk_user: ^1.6.1
+  # 카카오 로그인 (iOS 크래시 원인 - 미사용 제거)
+  # kakao_flutter_sdk_user: ^1.6.1
 
 dev_dependencies:
   flutter_test:
