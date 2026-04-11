@@ -67,7 +67,7 @@ class TodayDevotionCard extends StatelessWidget {
                       const Spacer(),
                       if (progress != null)
                         Text(
-                          '${progress!.completedCount}/5일 완료',
+                          '${progress!.completedCount}/6일 완료',
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.secondary,
@@ -81,7 +81,7 @@ class TodayDevotionCard extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: progress!.completedCount / 5,
+                        value: progress!.completedCount / 6,
                         backgroundColor:
                             AppColors.secondary.withValues(alpha: 0.2),
                         valueColor: const AlwaysStoppedAnimation<Color>(
@@ -93,7 +93,7 @@ class TodayDevotionCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     devotion.isEmpty
-                        ? '주중 묵상은 월~금요일에 제공됩니다'
+                        ? '주중 묵상은 월~토요일에 제공됩니다'
                         : devotion,
                     style: TextStyle(
                       fontSize: 15,

@@ -4,7 +4,7 @@ import '../../core/config/app_config.dart';
 
 class SermonAiResult {
   final String summary;
-  final Map<String, String> devotionals; // day1~day5
+  final Map<String, String> devotionals; // day1~day6
 
   SermonAiResult({required this.summary, required this.devotionals});
 }
@@ -39,6 +39,7 @@ class AiSermonService {
         'day3': parsed['day3'] as String? ?? '',
         'day4': parsed['day4'] as String? ?? '',
         'day5': parsed['day5'] as String? ?? '',
+        'day6': parsed['day6'] as String? ?? '',
       },
     );
   }

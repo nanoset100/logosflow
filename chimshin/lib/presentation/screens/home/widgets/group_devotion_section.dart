@@ -75,7 +75,7 @@ class GroupDevotionSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      '5일 묵상 교재',
+                      '6일 묵상 교재',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white,
@@ -114,7 +114,7 @@ class GroupDevotionSection extends StatelessWidget {
                   Row(
                     children: [
                       ...List.generate(
-                        5,
+                        6,
                         (i) => Container(
                           width: 30,
                           height: 30,
@@ -140,7 +140,7 @@ class GroupDevotionSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '$completedCount / 5일 완료',
+                        '$completedCount / 6일 완료',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withValues(alpha: 0.85),

@@ -38,6 +38,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
   final _day3Ctrl = TextEditingController();
   final _day4Ctrl = TextEditingController();
   final _day5Ctrl = TextEditingController();
+  final _day6Ctrl = TextEditingController();
 
   // 텍스트 붙여넣기 / YouTube
   final _pasteCtrl = TextEditingController();
@@ -73,6 +74,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     _day3Ctrl.dispose();
     _day4Ctrl.dispose();
     _day5Ctrl.dispose();
+    _day6Ctrl.dispose();
     _pasteCtrl.dispose();
     _youtubeCtrl.dispose();
     _youtubeService.dispose();
@@ -113,6 +115,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
           'day3': _day3Ctrl.text.trim(),
           'day4': _day4Ctrl.text.trim(),
           'day5': _day5Ctrl.text.trim(),
+          'day6': _day6Ctrl.text.trim(),
         },
         'keyPoints': [],
         'createdAt': FieldValue.serverTimestamp(),
@@ -142,7 +145,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ── AI 분석 공통 로직 (요약 + 5일 묵상 자동 채우기) ──
+  // ── AI 분석 공통 로직 (요약 + 6일 묵상 자동 채우기) ──
   Future<void> _runAi(String text) async {
     if (text.trim().isEmpty) {
       _showSnack('분석할 텍스트를 먼저 입력해주세요');
@@ -158,6 +161,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
         _day3Ctrl.text = result.devotionals['day3'] ?? '';
         _day4Ctrl.text = result.devotionals['day4'] ?? '';
         _day5Ctrl.text = result.devotionals['day5'] ?? '';
+        _day6Ctrl.text = result.devotionals['day6'] ?? '';
       });
       _showSnack('AI 분석 완료! 내용을 검토한 후 저장하세요');
     } catch (e) {
@@ -293,23 +297,25 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
               _multilineField(_summaryCtrl, '설교 핵심 내용을 3~5문단으로 요약해 주세요', lines: 6),
               const SizedBox(height: 24),
 
-              // ── 5일 묵상 ──
-              _sectionTitle('5일 묵상'),
+              // ── 6일 묵상 ──
+              _sectionTitle('6일 묵상 (월~토)'),
               const SizedBox(height: 4),
               const Text(
-                '구역 예배 교재로 바로 사용할 수 있습니다',
+                '구역 예배 교재로 바로 사용할 수 있습니다 (오늘의 말씀 / 묵상 / 적용 형식)',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 12),
-              _devotionalField(_day1Ctrl, '월요일', '오늘 말씀에서 깨달은 것은 무엇인가요?'),
+              _devotionalField(_day1Ctrl, '월요일', '**[월요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 묵상 내용\n\n**적용**: 실천 행동'),
               const SizedBox(height: 10),
-              _devotionalField(_day2Ctrl, '화요일', '이 말씀을 내 삶에 어떻게 적용할 수 있을까요?'),
+              _devotionalField(_day2Ctrl, '화요일', '**[화요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 묵상 내용\n\n**적용**: 실천 행동'),
               const SizedBox(height: 10),
-              _devotionalField(_day3Ctrl, '수요일', '오늘 이 말씀으로 어떻게 기도하시겠습니까?'),
+              _devotionalField(_day3Ctrl, '수요일', '**[수요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 묵상 내용\n\n**적용**: 실천 행동'),
               const SizedBox(height: 10),
-              _devotionalField(_day4Ctrl, '목요일', '이번 주 실천할 한 가지는 무엇인가요?'),
+              _devotionalField(_day4Ctrl, '목요일', '**[목요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 묵상 내용\n\n**적용**: 실천 행동'),
               const SizedBox(height: 10),
-              _devotionalField(_day5Ctrl, '금요일', '가족/구역원에게 나눌 말씀의 핵심은?'),
+              _devotionalField(_day5Ctrl, '금요일', '**[금요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 묵상 내용\n\n**적용**: 실천 행동'),
+              const SizedBox(height: 10),
+              _devotionalField(_day6Ctrl, '토요일', '**[토요일] 제목**\n\n**오늘의 말씀**: "핵심 구절"\n\n**묵상**: 한 주를 돌아보며\n\n**적용**: 소망 나누기'),
               const SizedBox(height: 32),
 
               // ── 저장 버튼 ──

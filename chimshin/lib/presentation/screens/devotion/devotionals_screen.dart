@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
@@ -27,7 +28,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const days = ['월', '화', '수', '목', '금'];
+    const days = ['월', '화', '수', '목', '금', '토'];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -77,7 +78,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
                       size: 16, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
-                    '이번 주 묵상 진행: $completedCount / 5일',
+                    '이번 주 묵상 진행: $completedCount / 6일',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -85,7 +86,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (completedCount == 5)
+                  if (completedCount == 6)
                     const Row(
                       children: [
                         Icon(Icons.star, size: 15, color: Colors.amber),
@@ -107,7 +108,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
         ),
         // 진행 바
         LinearProgressIndicator(
-          value: completedCount / 5,
+          value: completedCount / 6,
           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
           minHeight: 4,
@@ -117,7 +118,7 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: 5,
+            itemCount: 6,
             itemBuilder: (context, index) {
               final dayKey = 'day${index + 1}';
               final devotional = widget.sermon.devotionals[dayKey] ?? '';
@@ -195,16 +196,30 @@ class _DevotionalsScreenState extends State<DevotionalsScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        devotional.isEmpty ? '묵상 내용이 없습니다' : devotional,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: devotional.isEmpty
-                              ? AppColors.textHint
-                              : AppColors.textPrimary,
-                          height: 1.5,
-                        ),
-                      ),
+                      devotional.isEmpty
+                          ? Text(
+                              '묵상 내용이 없습니다',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textHint,
+                                height: 1.5,
+                              ),
+                            )
+                          : MarkdownBody(
+                              data: devotional,
+                              styleSheet: MarkdownStyleSheet(
+                                p: const TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.textPrimary,
+                                  height: 1.6,
+                                ),
+                                strong: const TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
                       if (isCompleted) ...[
                         const SizedBox(height: 10),
                         const Row(

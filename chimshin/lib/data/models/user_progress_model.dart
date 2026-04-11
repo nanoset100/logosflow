@@ -4,7 +4,7 @@ class UserProgressModel {
   final String userId;
   final String sermonId;
   final String churchCode;
-  final Map<String, bool> completedDays; // day1~day5
+  final Map<String, bool> completedDays; // day1~day6
   final DateTime? updatedAt;
 
   UserProgressModel({
@@ -27,6 +27,7 @@ class UserProgressModel {
         'day3': data['day3'] as bool? ?? false,
         'day4': data['day4'] as bool? ?? false,
         'day5': data['day5'] as bool? ?? false,
+        'day6': data['day6'] as bool? ?? false,
       },
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] as Timestamp).toDate()

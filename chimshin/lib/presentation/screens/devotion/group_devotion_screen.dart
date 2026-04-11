@@ -34,7 +34,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
         : rawSummary;
     final text =
         '📖 ${widget.sermon.title} - ${widget.sermon.pastor} 목사님\n\n$preview\n\n'
-        '👉 구역 예배 5일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!\n'
+        '👉 구역 예배 6일 묵상 교재는 [말씀노트] 앱에서 무료로 확인하세요!\n'
         'https://play.google.com/store/apps/details?id=com.logosflow.chimshin';
     Share.share(text, subject: '${widget.sermon.title} - 구역 예배 교재');
   }
@@ -254,9 +254,9 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
     );
   }
 
-  // ─── 5일 묵상 나눔 ────────────────────────────────
+  // ─── 6일 묵상 나눔 ────────────────────────────────
   Widget _buildDevotionSection(UserProgressModel? progress) {
-    const days = ['월', '화', '수', '목', '금'];
+    const days = ['월', '화', '수', '목', '금', '토'];
     final completedCount = progress?.completedCount ?? 0;
 
     return Column(
@@ -280,7 +280,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
                   ),
                   const SizedBox(width: 10),
                   const Text(
-                    '5일 묵상 나눔 교재',
+                    '6일 묵상 나눔 교재 (월~토)',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -297,7 +297,7 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: completedCount / 5,
+                        value: completedCount / 6,
                         backgroundColor:
                             AppColors.secondary.withValues(alpha: 0.15),
                         valueColor: const AlwaysStoppedAnimation<Color>(
@@ -308,14 +308,14 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    '$completedCount / 5일',
+                    '$completedCount / 6일',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.secondary,
                     ),
                   ),
-                  if (completedCount == 5) ...[
+                  if (completedCount == 6) ...[
                     const SizedBox(width: 6),
                     const Icon(Icons.star_rounded,
                         size: 18, color: Colors.amber),
@@ -335,12 +335,12 @@ class _GroupDevotionScreenState extends State<GroupDevotionScreen> {
         ),
         const SizedBox(height: 16),
 
-        // 5일 카드 목록
+        // 6일 카드 목록
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: 5,
+          itemCount: 6,
           itemBuilder: (context, index) {
             final dayKey = 'day${index + 1}';
             final devotional = widget.sermon.devotionals[dayKey] ?? '';
