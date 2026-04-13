@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/saved_sermon_service.dart';
 import '../sermon/sermon_detail_screen.dart';
@@ -13,8 +14,10 @@ class SavedSermonsScreen extends StatefulWidget {
 
 class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
   final _savedService = SavedSermonService();
+  final _authService = AuthService();
   List<SermonModel> _sermons = [];
   bool _isLoading = true;
+  String _churchCode = '';
 
   @override
   void initState() {
@@ -24,12 +27,19 @@ class _SavedSermonsScreenState extends State<SavedSermonsScreen> {
 
   Future<void> _loadSermons() async {
     setState(() => _isLoading = true);
-    final sermons = await _savedService.getSavedSermons();
-    if (mounted) setState(() { _sermons = sermons; _isLoading = false; });
+    final code = await _authService.getSavedChurchCode() ?? '';
+    final sermons = await _savedService.getSavedSermons(code);
+    if (mounted) {
+      setState(() {
+        _churchCode = code;
+        _sermons = sermons;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _unsave(SermonModel sermon) async {
-    await _savedService.unsaveSermon(sermon.id);
+    await _savedService.unsaveSermon(sermon.id, _churchCode);
     if (mounted) {
       setState(() => _sermons.removeWhere((s) => s.id == sermon.id));
       ScaffoldMessenger.of(context).showSnackBar(

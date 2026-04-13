@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadSavedSermons() async {
     try {
-      final saved = await _savedService.getSavedSermons();
+      final saved = await _savedService.getSavedSermons(_churchCode ?? '');
       if (mounted) setState(() => _savedSermons = saved);
     } catch (_) {}
   }

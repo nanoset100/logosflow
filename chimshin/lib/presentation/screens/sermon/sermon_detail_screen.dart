@@ -196,7 +196,7 @@ class _SummaryTabState extends State<_SummaryTab> {
   }
 
   Future<void> _checkSaved() async {
-    final saved = await _savedService.isSaved(widget.sermon.id);
+    final saved = await _savedService.isSaved(widget.sermon.id, widget.sermon.churchCode);
     if (mounted) setState(() => _isSaved = saved);
   }
 
@@ -204,7 +204,7 @@ class _SummaryTabState extends State<_SummaryTab> {
     setState(() => _saveLoading = true);
     try {
       if (_isSaved) {
-        await _savedService.unsaveSermon(widget.sermon.id);
+        await _savedService.unsaveSermon(widget.sermon.id, widget.sermon.churchCode);
         if (mounted) {
           setState(() => _isSaved = false);
           ScaffoldMessenger.of(context).showSnackBar(
