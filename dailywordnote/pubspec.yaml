@@ -1,0 +1,70 @@
+name: daily_wordnote
+description: 데일리 말씀노트 - 우리 교회 말씀 묵상 플랫폼
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase (v3 - Firebase iOS SDK 11.x, gRPC-Core 의존성 제거)
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.5
+  firebase_storage: ^12.3.3
+  firebase_messaging: ^15.1.6
+
+  # UI
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.0
+
+  # 유틸리티
+  intl: ^0.18.1
+  shared_preferences: ^2.2.2
+  flutter_dotenv: ^5.1.0
+  http: ^1.1.0
+  audioplayers: ^6.1.0
+  url_launcher: ^6.2.5
+  in_app_update: ^4.2.3
+  package_info_plus: ^8.0.0
+  youtube_explode_dart: ^3.0.5
+  file_picker: ^8.0.0
+  flutter_markdown: ^0.7.3
+  share_plus: ^10.0.0
+
+  # 푸시 알림 (포그라운드 배너)
+  flutter_local_notifications: ^17.2.3
+
+  # Apple 로그인
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # fonts:  # TODO: Pretendard 폰트 파일 추가 후 활성화
+  #   - family: Pretendard
+  #     fonts:
+  #       - asset: assets/fonts/Pretendard-Regular.ttf
+  #       - asset: assets/fonts/Pretendard-Bold.ttf
+  #         weight: 700

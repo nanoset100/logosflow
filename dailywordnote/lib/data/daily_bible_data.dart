@@ -1,0 +1,60 @@
+/// 신약성경 260장 기반 오늘의 성경 읽기 계획
+class DailyBibleData {
+  static const List<Map<String, Object>> _books = [
+    {'name': '마태복음', 'chapters': 28},
+    {'name': '마가복음', 'chapters': 16},
+    {'name': '누가복음', 'chapters': 24},
+    {'name': '요한복음', 'chapters': 21},
+    {'name': '사도행전', 'chapters': 28},
+    {'name': '로마서', 'chapters': 16},
+    {'name': '고린도전서', 'chapters': 16},
+    {'name': '고린도후서', 'chapters': 13},
+    {'name': '갈라디아서', 'chapters': 6},
+    {'name': '에베소서', 'chapters': 6},
+    {'name': '빌립보서', 'chapters': 4},
+    {'name': '골로새서', 'chapters': 4},
+    {'name': '데살로니가전서', 'chapters': 5},
+    {'name': '데살로니가후서', 'chapters': 3},
+    {'name': '디모데전서', 'chapters': 6},
+    {'name': '디모데후서', 'chapters': 4},
+    {'name': '디도서', 'chapters': 3},
+    {'name': '빌레몬서', 'chapters': 1},
+    {'name': '히브리서', 'chapters': 13},
+    {'name': '야고보서', 'chapters': 5},
+    {'name': '베드로전서', 'chapters': 5},
+    {'name': '베드로후서', 'chapters': 3},
+    {'name': '요한일서', 'chapters': 5},
+    {'name': '요한이서', 'chapters': 1},
+    {'name': '요한삼서', 'chapters': 1},
+    {'name': '유다서', 'chapters': 1},
+    {'name': '요한계시록', 'chapters': 22},
+  ];
+
+  /// 오늘의 읽기 계획 반환 (신약 260장 순환)
+  static Map<String, dynamic> getToday() {
+    final now = DateTime.now();
+    final startOfYear = DateTime(now.year, 1, 1);
+    final dayOfYear = now.difference(startOfYear).inDays;
+
+    int remaining = dayOfYear % 260;
+    for (final book in _books) {
+      final chapters = book['chapters'] as int;
+      if (remaining < chapters) {
+        return {
+          'book': book['name'] as String,
+          'chapter': remaining + 1,
+        };
+      }
+      remaining -= chapters;
+    }
+    return {'book': '마태복음', 'chapter': 1};
+  }
+
+  /// 오늘 읽은 총 진행률 (0.0 ~ 1.0)
+  static double getTodayProgress() {
+    final now = DateTime.now();
+    final startOfYear = DateTime(now.year, 1, 1);
+    final dayOfYear = now.difference(startOfYear).inDays;
+    return (dayOfYear % 260) / 260.0;
+  }
+}
