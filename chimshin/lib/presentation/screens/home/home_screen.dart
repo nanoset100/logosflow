@@ -391,7 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              // FAB(설교등록 버튼)에 가리지 않도록 하단 여백 확보
+              const SizedBox(height: 100),
             ],
           ),
         ),
