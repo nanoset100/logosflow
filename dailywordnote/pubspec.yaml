@@ -1,7 +1,7 @@
 name: daily_wordnote
 description: 데일리 말씀노트 - 우리 교회 말씀 묵상 플랫폼
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
