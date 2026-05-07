@@ -332,7 +332,13 @@ async def landing_page():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "chimshin-whisper"}
+    return {
+        "status": "ok",
+        "service": "chimshin-whisper",
+        "stt_provider": "groq" if groq_client else "openai",
+        "tts_provider": "openai",
+        "ai_provider": "openai",
+    }
 
 
 @app.post("/transcribe")
