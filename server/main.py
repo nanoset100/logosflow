@@ -9,6 +9,7 @@ from fastapi.responses import Response, HTMLResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, OpenAIError
+from groq import AsyncGroq
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,6 +26,10 @@ if not _openai_key:
     raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다")
 
 client = AsyncOpenAI(api_key=_openai_key)
+
+# Groq 클라이언트 (Whisper 전용 - 무료)
+_groq_key = os.getenv("GROQ_API_KEY")
+groq_client = AsyncGroq(api_key=_groq_key) if _groq_key else None
 
 MAX_WHISPER_BYTES = 24 * 1024 * 1024  # 24MB
 
@@ -294,13 +299,23 @@ async def transcribe_file(audio_path: str, language: str = "ko") -> str:
 
     try:
         with open(transcribe_path, "rb") as f:
-            result = await client.audio.transcriptions.create(
-                model="whisper-1",
-                file=f,
-                language=language,
-                response_format="text",
-            )
-    except OpenAIError as e:
+            if groq_client:
+                # Groq Whisper (무료, 고정확도)
+                result = await groq_client.audio.transcriptions.create(
+                    model="whisper-large-v3-turbo",
+                    file=(Path(transcribe_path).name, f, "audio/mpeg"),
+                    language=language,
+                    response_format="text",
+                )
+            else:
+                # Groq 키 없을 시 OpenAI 폴백
+                result = await client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=f,
+                    language=language,
+                    response_format="text",
+                )
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"Whisper API 오류: {str(e)}")
     finally:
         if file_size > MAX_WHISPER_BYTES:
