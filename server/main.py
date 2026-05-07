@@ -330,6 +330,12 @@ async def landing_page():
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@app.get("/daily", response_class=HTMLResponse)
+async def landing_daily():
+    html_path = Path(__file__).parent / "landing_daily.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
 @app.get("/health")
 async def health():
     return {
