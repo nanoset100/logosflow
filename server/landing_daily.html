@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>데일리 말씀노트 - 매일 말씀으로 성장하는 신앙생활</title>
+  <title>데일리 말씀노트 - AI 말씀비서와 함께하는 신앙 성장</title>
   <meta name="description"
-    content="매일 성경 말씀과 AI 묵상 가이드로 신앙을 성장시키는 개인 묵상 앱. 기도제목 관리, 365일 성경통독, AI 말씀 묵상을 하나의 앱으로.">
+    content="주일 설교를 AI가 자동 요약하고, 월~금 5일 묵상 가이드로 말씀을 삶에 적용하는 교회 앱. 침례교단 3,500 교회를 위한 스마트 신앙 도구. 구역 예배 교재 자동 생성.">
   <meta name="keywords" content="설교노트, 교회앱, AI설교요약, 침례교, 신앙성장, 말씀적용, 교회관리, 구역예배, 묵상, 침신대">
-  <meta property="og:title" content="데일리 말씀노트 - 매일 말씀으로 성장하는 신앙생활">
+  <meta property="og:title" content="데일리 말씀노트 - AI 말씀비서와 함께하는 신앙 성장">
   <meta property="og:description" content="주일 설교를 AI가 자동 요약하고 5일 묵상 가이드로 삶에 적용하는 교회 앱. 구역 예배 교재 자동 생성.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,9 +16,9 @@
     rel="stylesheet">
   <style>
     :root {
-      --primary: #2E7D32;
-      --primary-dark: #1B5E20;
-      --primary-light: #E8F5E9;
+      --primary: #1565C0;
+      --primary-dark: #0D47A1;
+      --primary-light: #E3F2FD;
       --accent: #FF8F00;
       --accent-light: #FFF3E0;
       --success: #2E7D32;
@@ -53,7 +53,7 @@
       z-index: 100;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(46, 125, 50, 0.08);
+      border-bottom: 1px solid rgba(21, 101, 192, 0.08);
       transition: box-shadow 0.3s;
     }
 
@@ -127,7 +127,7 @@
     /* ─── 히어로 ─── */
     .hero {
       padding: 140px 24px 80px;
-      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #F1F8E9 100%);
+      background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #E8EAF6 100%);
       position: relative;
       overflow: hidden;
       text-align: center;
@@ -140,7 +140,7 @@
       right: -20%;
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(46, 125, 50, 0.08) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(21, 101, 192, 0.08) 0%, transparent 70%);
       border-radius: 50%;
     }
 
@@ -155,7 +155,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(46, 125, 50, 0.1);
+      background: rgba(21, 101, 192, 0.1);
       color: var(--primary);
       padding: 6px 16px;
       border-radius: 20px;
@@ -211,13 +211,13 @@
       transition: all 0.3s;
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+      box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
     }
 
     .btn-primary:hover {
       background: var(--primary-dark);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+      box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4);
     }
 
     .btn-outline {
@@ -388,7 +388,7 @@
 
     .week-day.active {
       background: var(--primary-light);
-      border: 1px solid rgba(46, 125, 50, 0.2);
+      border: 1px solid rgba(21, 101, 192, 0.2);
     }
 
     .week-day.faded {
@@ -438,8 +438,8 @@
 
     .feature-card:hover {
       transform: translateY(-6px);
-      border-color: rgba(46, 125, 50, 0.15);
-      box-shadow: 0 12px 40px rgba(46, 125, 50, 0.1);
+      border-color: rgba(21, 101, 192, 0.15);
+      box-shadow: 0 12px 40px rgba(21, 101, 192, 0.1);
     }
 
     .feature-icon {
@@ -454,7 +454,7 @@
     }
 
     .feature-icon.blue {
-      background: #E8F5E9;
+      background: #E3F2FD;
     }
 
     .feature-icon.orange {
@@ -1005,7 +1005,7 @@
       top: 12px;
       left: 20px;
       font-size: 60px;
-      color: rgba(46, 125, 50, 0.1);
+      color: rgba(21, 101, 192, 0.1);
       font-weight: 800;
       line-height: 1;
     }
@@ -1090,7 +1090,7 @@
       font-size: 20px;
       font-weight: 800;
       margin: 0 auto 16px;
-      box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+      box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
     }
 
     .flow-step h4 {
@@ -1182,7 +1182,7 @@
       border-radius: 20px;
       padding: 48px 40px;
       text-align: center;
-      border: 2px solid rgba(46, 125, 50, 0.1);
+      border: 2px solid rgba(21, 101, 192, 0.1);
     }
 
     .register-box h3 {
@@ -1543,7 +1543,7 @@
         <a href="#devotion">5일 묵상</a>
         <a href="#pastor">목사님 도구</a>
         <a href="#faq">FAQ</a>
-        <a href="#register" class="nav-cta">앱 다운로드</a>
+        <a href="#register" class="nav-cta">교회 등록</a>
       </div>
     </div>
   </nav>
@@ -1552,14 +1552,15 @@
   <section class="hero">
     <div class="hero-content">
       <h1>
-        매일 아침<br>
-        <span>말씀과 함께</span> 하루를 시작하다
+        주일 설교가<br>
+        <span>평일의 삶</span>으로 이어지다
       </h1>
       <p>
-        매일 성경 말씀과 묵상 가이드로 신앙의 깊이를 더해가세요. 개인 기도제목 관리, AI 말씀 묵상, 365일 성경통독을 하나의 앱으로.
+        AI가 주일 설교를 자동 요약하고, 월~금 5일간 매일 묵상 가이드를 제공합니다.
+        구역 예배 교재도 자동 생성. 목사님과 성도 모두를 위한 스마트 교회 앱.
       </p>
       <p class="hero-sub">
-        매일 말씀 | 개인 신앙 성장을 위한 AI 묵상 앱
+        한국에 유일한 설교 기반 AI 묵상 앱
       </p>
     </div>
   </section>
@@ -1568,8 +1569,8 @@
   <div class="stats-bar">
     <div class="stats-inner">
       <div class="stat-item">
-        <h3>365일</h3>
-        <p>매일 말씀 묵상</p>
+        <h3>3,500+</h3>
+        <p>침례교회 대상</p>
       </div>
       <div class="stat-item">
         <h3 class="accent">90%</h3>
@@ -1585,7 +1586,7 @@
       </div>
       <div class="stat-item">
         <h3>24/7</h3>
-        <p>언제나 말씀과 함께</p>
+        <p>교회 소식 실시간</p>
       </div>
     </div>
   </div>
@@ -1596,11 +1597,13 @@
       <div class="problem-grid fade-up">
         <div class="problem-left">
           <h3>
-            매일 말씀을 읽고 싶은데<br>
-            <span>어디서부터 시작할까요?</span>
+            설교를 들었는데<br>
+            <span>왜 기억이 안 날까요?</span>
           </h3>
           <p>
-            성경을 읽고 싶지만 어떻게 시작해야 할지 막막합니다. 매일 꾸준히 묵상하는 것이 중요하지만, 혼자서는 지속하기 어렵습니다. 데일리 말씀노트가 매일 함께합니다.
+            연구에 따르면 설교 내용의 90%를 1주일 내에 잊습니다.
+            주일에만 신앙인이 되고, 월요일이면 잊혀지는 말씀.
+            6일간의 신앙 공백이 성장을 멈추게 합니다.
           </p>
           <div class="problem-stats">
             <div class="problem-stat">
@@ -2374,7 +2377,7 @@
                   </div>
                   <!-- 음성 듣기 버튼 -->
                   <div
-                    style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
                     <div
                       style="background:var(--primary);border-radius:50%;width:32px;height:32px;min-width:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">
                       🔊</div>
@@ -2429,7 +2432,7 @@
               <!-- 앱 화면 내용 -->
               <div style="background:#f5f7fa;min-height:420px;padding:0;">
                 <!-- 앱 상단바 -->
-                <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);padding:14px 16px 12px;">
+                <div style="background:linear-gradient(135deg,#0D47A1,#1565C0);padding:14px 16px 12px;">
                   <p style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:2px;">👨‍💼 목사 대시보드</p>
                   <p style="font-size:14px;font-weight:800;color:white;">이번 주 성도 현황</p>
                 </div>
@@ -2704,7 +2707,7 @@
   <footer>
     <div class="footer-inner">
       <h4>+ 데일리 말씀노트</h4>
-      <p>매일 말씀으로 성장하는 신앙생활</p>
+      <p>AI 말씀비서와 함께하는 신앙 성장</p>
       <p style="margin-top: 4px; font-size: 12px;">AI 말씀비서 · LogosFlow</p>
       <div class="footer-divider"></div>
       <p>문의: <a href="mailto:nanoset@naver.com">nanoset@naver.com</a></p>
