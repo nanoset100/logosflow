@@ -50,7 +50,10 @@ class TtsService {
 
     final response = await http.post(
       Uri.parse('$_baseUrl/ai/tts'),
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-App-Key': AppConfig.appSecretKey,
+      },
       body: jsonEncode({
         'text': text,
         'voice': _getVoiceName(_currentVoice),

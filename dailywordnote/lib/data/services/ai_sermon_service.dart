@@ -19,7 +19,10 @@ class AiSermonService {
 
     final response = await http.post(
       Uri.parse('$_baseUrl/ai/analyze'),
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-App-Key': AppConfig.appSecretKey,
+      },
       body: jsonEncode({'text': sermonText}),
     );
 
