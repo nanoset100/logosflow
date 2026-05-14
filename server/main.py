@@ -448,8 +448,15 @@ class TtsRequest(BaseModel):
     voice: str = "alloy"  # alloy(남성) | nova(여성)
 
 
+def _verify_app_key(x_app_key: str = ""):
+    expected = os.getenv("NOTIFY_SERVER_KEY")
+    if not expected or x_app_key != expected:
+        raise HTTPException(status_code=403, detail="인증 실패")
+
+
 @app.post("/ai/tts")
-async def text_to_speech(req: TtsRequest):
+async def text_to_speech(req: TtsRequest, x_app_key: str = Header("")):
+    _verify_app_key(x_app_key)
     allowed_voices = {"alloy", "nova", "echo", "fable", "onyx", "shimmer"}
     if req.voice not in allowed_voices:
         raise HTTPException(status_code=400, detail=f"지원하지 않는 음성: {req.voice}")
@@ -474,7 +481,8 @@ class AnalyzeRequest(BaseModel):
 
 
 @app.post("/ai/analyze")
-async def analyze_sermon(req: AnalyzeRequest):
+async def analyze_sermon(req: AnalyzeRequest, x_app_key: str = Header("")):
+    _verify_app_key(x_app_key)
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="분석할 텍스트가 없습니다")
 

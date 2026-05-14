@@ -20,7 +20,10 @@ class AiSermonService {
 
     final response = await http.post(
       Uri.parse('$_baseUrl/ai/analyze'),
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-App-Key': dotenv.env['APP_SECRET_KEY'] ?? '',
+      },
       body: jsonEncode({'text': sermonText}),
     );
 
