@@ -443,6 +443,50 @@ async def transcribe_youtube(
     return {"text": text, "language": language}
 
 
+class PrayerRequest(BaseModel):
+    prayer_type: str  # 예배 종류 (예: 주일예배, 새벽예배)
+
+
+@app.post("/ai/prayer")
+async def generate_prayer(req: PrayerRequest, x_app_key: str = Header("")):
+    _verify_app_key(x_app_key)
+    if not req.prayer_type.strip():
+        raise HTTPException(status_code=400, detail="예배 종류가 비어 있습니다")
+
+    system_prompt = f"""당신은 교회 예배를 위한 대표기도문 작성을 도와주는 목사님입니다.
+기도문의 길이는 천천히 읽었을 때 약 5분 정도 걸리도록 작성해주세요.
+이를 위해 다음 사항을 꼭 지켜주세요:
+1. '하느님'이라는 표현은 절대로 사용하지 말고, 항상 '하나님'으로 통일하여 표현합니다.
+2. 기도의 마무리는 반드시 "예수님의 이름으로 기도합니다."라는 표현으로 끝내야 합니다.
+3. 예배, 찬양과 감사, 죄에 대한 고백, 회중 전체의 염원과 소망, 말씀과 목회자를 담은 간구.
+4. 대표기도문에는 반드시 입력한 예배 이름 "{req.prayer_type}"을(를) 1회 이상 언급해주세요.
+5. 각 문장마다 자연스러운 쉼표나 마침표를 사용하여 숨을 쉴 수 있도록 합니다.
+6. 어려운 단어를 피하고 누구나 쉽게 이해할 수 있는 단어를 사용합니다.
+7. 문단을 명확하게 나누어 전체적으로 깔끔한 느낌을 줍니다.
+8. 핵심 메시지를 중심으로 문장을 구성하여 집중력을 유지할 수 있도록 합니다.
+9. 기도의 흐름이 자연스럽고, 듣는 이의 마음에 잘 와닿도록 작성합니다.
+10. 기도의 길이는 천천히 읽었을 때 약 5분 분량으로 (1000-1200자).
+11. 의미 없이 반복되는 표현을 피하고, 진심을 담아 정중하고 은혜롭게 작성해주세요.
+12. 기도의 시작부터 마침까지 자연스러운 흐름을 유지하여 듣는 사람이 끝까지 집중할 수 있도록 합니다.
+13. 만약 예배 이름({req.prayer_type})에 '부활절', '성탄절', '사순절', '성령강림절', '맥추감사절', '추수감사절' 등 기독교 절기가 포함되어 있다면, 해당 절기가 갖는 신학적 의미와 감사의 고백을 기도 내용에 자연스럽게 포함하여 작성해주세요."""
+
+    try:
+        completion = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": "대표기도문을 작성해주세요."},
+            ],
+            max_tokens=3500,
+            temperature=0.7,
+        )
+        prayer = completion.choices[0].message.content.strip()
+    except OpenAIError as e:
+        raise HTTPException(status_code=500, detail=f"AI 오류: {str(e)}")
+
+    return {"prayer": prayer}
+
+
 class TtsRequest(BaseModel):
     text: str
     voice: str = "alloy"  # alloy(남성) | nova(여성)
