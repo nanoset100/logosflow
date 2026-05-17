@@ -168,7 +168,7 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
     }
     setState(() => _isAiLoading = true);
     try {
-      final result = await _aiService.analyze(text);
+      final result = await _aiService.analyze(text, scripture: _bibleVerseCtrl.text.trim());
       setState(() {
         _summaryCtrl.text = result.summary;
         _day1Ctrl.text = result.devotionals['day1'] ?? '';

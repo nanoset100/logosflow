@@ -13,7 +13,7 @@ class AiSermonService {
   static String get _baseUrl =>
       dotenv.env['WHISPER_SERVER_URL'] ?? 'http://localhost:8000';
 
-  Future<SermonAiResult> analyze(String sermonText) async {
+  Future<SermonAiResult> analyze(String sermonText, {String scripture = ''}) async {
     if (sermonText.trim().isEmpty) {
       throw Exception('분석할 텍스트가 없습니다');
     }
@@ -24,7 +24,7 @@ class AiSermonService {
         'Content-Type': 'application/json; charset=utf-8',
         'X-App-Key': dotenv.env['APP_SECRET_KEY'] ?? '',
       },
-      body: jsonEncode({'text': sermonText}),
+      body: jsonEncode({'text': sermonText, 'scripture': scripture}),
     );
 
     if (response.statusCode != 200) {

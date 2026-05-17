@@ -652,6 +652,7 @@ async def tts_cache(
 
 class AnalyzeRequest(BaseModel):
     text: str
+    scripture: str = ""  # 성경 본문 구절 (예: 룻기 1:1-18)
 
 
 @app.post("/ai/analyze")
@@ -661,15 +662,24 @@ async def analyze_sermon(req: AnalyzeRequest, x_app_key: str = Header("")):
         raise HTTPException(status_code=400, detail="분석할 텍스트가 없습니다")
 
     truncated = req.text[:10000] if len(req.text) > 10000 else req.text
+    scripture = req.scripture.strip()
+
+    scripture_instruction = (
+        f"이 설교의 성경 본문은 [{scripture}]입니다. "
+        f"요약과 묵상 전반에 걸쳐 {scripture}에 등장하는 인물, 사건, 배경, 핵심 메시지를 "
+        "반드시 구체적으로 언급하고 설교 내용과 연결하세요. "
+        "성경 본문의 내용이 요약에서 빠지면 안 됩니다.\n"
+    ) if scripture else ""
 
     system_prompt = (
         "당신은 한국 침례교회의 설교 전문 분석가입니다. "
         "설교 텍스트를 분석하여 성도들의 신앙 성장을 돕는 요약과 6일 묵상(월~토)을 작성합니다. "
         "신학적으로 정확하고 평신도가 이해하기 쉬운 언어를 사용하세요. "
         "반드시 JSON 형식만 반환하고 추가 설명은 쓰지 마세요.\n\n"
+        f"{scripture_instruction}"
         "[절대 필수 규칙]\n"
         "1. summary 필드는 반드시 두 부분으로 구성합니다:\n"
-        "   Part 1) 설교 전체 요약 3개 문단 (각 문단 사이 빈 줄)\n"
+        "   Part 1) 설교 전체 요약 3개 문단 (각 문단 사이 빈 줄) — 성경 본문의 인물/사건/배경 포함 필수\n"
         "   Part 2) '핵심 교훈' 섹션 — 이 섹션은 절대 생략 불가입니다.\n"
         "      형식: 핵심 교훈\\n\\n- **제목**\\n내용 (3개 이상 항목 필수)\n"
         "2. 핵심 교훈 섹션이 없으면 응답이 무효입니다. 반드시 포함하세요.\n"
@@ -678,10 +688,12 @@ async def analyze_sermon(req: AnalyzeRequest, x_app_key: str = Header("")):
         "   **묵상**: 2~3문장 묵상 내용\\n\\n**적용**: 오늘 하루 구체적 실천 행동 1~2가지"
     )
 
-    user_prompt = f"""다음 설교 텍스트를 분석하여 JSON으로만 응답해주세요.
+    scripture_section = f"\n성경 본문: {scripture}\n" if scripture else ""
 
+    user_prompt = f"""다음 설교 텍스트를 분석하여 JSON으로만 응답해주세요.
+{scripture_section}
 [summary 필드 구조 — 반드시 이 순서대로 작성]
-① 3개 문단 요약 (문단 사이 빈 줄)
+① 3개 문단 요약 (문단 사이 빈 줄) — 성경 본문({scripture or '위 구절'})의 인물·사건·배경을 첫 문단에 반드시 포함
 ② 빈 줄
 ③ 핵심 교훈  ← 이 줄 반드시 포함
 ④ 빈 줄
