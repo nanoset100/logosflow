@@ -332,22 +332,37 @@ async def split_into_chunks(input_path: str, chunk_dir: str) -> list:
 
 
 async def _call_whisper(audio_path: str, language: str) -> str:
-    with open(audio_path, "rb") as f:
-        if groq_client:
+    import io
+    audio_bytes = Path(audio_path).read_bytes()
+    filename = Path(audio_path).name
+
+    if groq_client:
+        try:
             result = await groq_client.audio.transcriptions.create(
                 model="whisper-large-v3-turbo",
-                file=(Path(audio_path).name, f, "audio/mpeg"),
+                file=(filename, io.BytesIO(audio_bytes), "audio/mpeg"),
                 language=language,
                 response_format="text",
             )
-        else:
-            result = await client.audio.transcriptions.create(
-                model="whisper-1",
-                file=f,
-                language=language,
-                response_format="text",
-            )
-    return result if isinstance(result, str) else str(result)
+            return result if isinstance(result, str) else str(result)
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "rate_limit" in err.lower():
+                print(f"[Whisper] Groq 429 한도 초과 → OpenAI 폴백")
+            else:
+                raise HTTPException(status_code=500, detail=f"Whisper API 오류: {err}")
+
+    # Groq 미설정 또는 429 → OpenAI Whisper
+    try:
+        result = await client.audio.transcriptions.create(
+            model="whisper-1",
+            file=(filename, io.BytesIO(audio_bytes)),
+            language=language,
+            response_format="text",
+        )
+        return result if isinstance(result, str) else str(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Whisper API 오류: {str(e)}")
 
 
 async def transcribe_file(audio_path: str, language: str = "ko") -> str:
