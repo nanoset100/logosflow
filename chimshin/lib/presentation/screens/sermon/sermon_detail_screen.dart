@@ -243,7 +243,13 @@ class _SummaryTabState extends State<_SummaryTab> {
     if (_ttsService == null) return;
     setState(() => _isLoading = true);
     try {
-      await _ttsService!.speak(widget.sermon.summary);
+      // 남성 음성 캐시 URL이 있으면 API 호출 없이 바로 재생
+      final cachedUrl = widget.sermon.audioUrl;
+      if (cachedUrl != null && cachedUrl.isNotEmpty && _selectedVoice == VoiceType.male) {
+        await _ttsService!.speakFromUrl(cachedUrl);
+      } else {
+        await _ttsService!.speak(widget.sermon.summary);
+      }
       setState(() {});
     } catch (e) {
       if (mounted) {

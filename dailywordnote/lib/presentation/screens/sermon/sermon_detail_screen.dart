@@ -243,7 +243,12 @@ class _SummaryTabState extends State<_SummaryTab> {
     if (_ttsService == null) return;
     setState(() => _isLoading = true);
     try {
-      await _ttsService!.speak(widget.sermon.summary);
+      final cachedUrl = widget.sermon.audioUrl;
+      if (cachedUrl != null && cachedUrl.isNotEmpty && _selectedVoice == VoiceType.male) {
+        await _ttsService!.speakFromUrl(cachedUrl);
+      } else {
+        await _ttsService!.speak(widget.sermon.summary);
+      }
       setState(() {});
     } catch (e) {
       if (mounted) {

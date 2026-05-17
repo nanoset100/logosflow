@@ -1,8 +1,10 @@
 import os
 import json
+import uuid
 import tempfile
 import asyncio
 import base64
+import urllib.parse
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header
 from fastapi.responses import Response, HTMLResponse
@@ -558,6 +560,30 @@ def _verify_app_key(x_app_key: str = ""):
         raise HTTPException(status_code=403, detail="인증 실패")
 
 
+async def _generate_tts_bytes(text: str, voice: str) -> bytes:
+    response = await client.audio.speech.create(
+        model="tts-1",
+        voice=voice,
+        input=text[:4000],  # OpenAI TTS 4096자 제한
+    )
+    return response.content
+
+
+async def _upload_to_firebase_storage(audio_bytes: bytes, blob_path: str) -> str:
+    """Firebase Storage에 업로드 후 다운로드 URL 반환"""
+    bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET")
+    if not bucket_name:
+        raise HTTPException(status_code=503, detail="FIREBASE_STORAGE_BUCKET 미설정")
+    bucket = firebase_admin.storage.bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+    blob.upload_from_string(audio_bytes, content_type="audio/mpeg")
+    token = str(uuid.uuid4())
+    blob.metadata = {"firebaseStorageDownloadTokens": token}
+    blob.patch()
+    encoded = urllib.parse.quote(blob_path, safe="")
+    return f"https://firebasestorage.googleapis.com/v0/b/{bucket_name}/o/{encoded}?alt=media&token={token}"
+
+
 @app.post("/ai/tts")
 async def text_to_speech(req: TtsRequest, x_app_key: str = Header("")):
     _verify_app_key(x_app_key)
@@ -568,16 +594,43 @@ async def text_to_speech(req: TtsRequest, x_app_key: str = Header("")):
         raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다")
 
     try:
-        response = await client.audio.speech.create(
-            model="tts-1",
-            voice=req.voice,
-            input=req.text,
-        )
-        audio_bytes = response.content
+        audio_bytes = await _generate_tts_bytes(req.text, req.voice)
     except OpenAIError as e:
         raise HTTPException(status_code=500, detail=f"TTS 오류: {str(e)}")
 
     return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+@app.post("/ai/tts/cache")
+async def tts_cache(
+    text: str = Form(...),
+    voice: str = Form(default="alloy"),
+    church_code: str = Form(...),
+    sermon_id: str = Form(...),
+    x_app_key: str = Header(""),
+):
+    """설교 TTS를 Firebase Storage에 캐싱 - 관리자 설교 등록 시 1회 호출"""
+    _verify_app_key(x_app_key)
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다")
+    allowed_voices = {"alloy", "nova"}
+    if voice not in allowed_voices:
+        raise HTTPException(status_code=400, detail=f"지원하지 않는 음성: {voice}")
+
+    try:
+        audio_bytes = await _generate_tts_bytes(text, voice)
+    except OpenAIError as e:
+        raise HTTPException(status_code=500, detail=f"TTS 오류: {str(e)}")
+
+    blob_path = f"sermons/{church_code}/{sermon_id}/tts_{voice}.mp3"
+    try:
+        url = await _upload_to_firebase_storage(audio_bytes, blob_path)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Storage 업로드 오류: {str(e)}")
+
+    return {"url": url, "voice": voice}
 
 
 class AnalyzeRequest(BaseModel):

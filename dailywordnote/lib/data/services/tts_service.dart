@@ -45,6 +45,14 @@ class TtsService {
     }
   }
 
+  /// 캐시된 URL에서 바로 재생 (API 비용 없음)
+  Future<void> speakFromUrl(String url) async {
+    if (_isPlaying) await stop();
+    await _audioPlayer.play(UrlSource(url));
+    _isPlaying = true;
+    _isPaused = false;
+  }
+
   Future<void> speak(String text) async {
     if (_isPlaying) await stop();
 
@@ -69,6 +77,33 @@ class TtsService {
       throw Exception(
           'TTS 오류 ${response.statusCode}: ${error['detail'] ?? '알 수 없는 오류'}');
     }
+  }
+
+  /// 설교 등록 시 TTS를 Firebase Storage에 캐싱 - URL 반환
+  static Future<String?> cacheForSermon({
+    required String churchCode,
+    required String sermonId,
+    required String text,
+    String voice = 'alloy',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConfig.serverUrl}/ai/tts/cache'),
+        headers: {'X-App-Key': AppConfig.appSecretKey},
+        body: {
+          'text': text,
+          'voice': voice,
+          'church_code': churchCode,
+          'sermon_id': sermonId,
+        },
+      ).timeout(const Duration(minutes: 3));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return data['url'] as String?;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<void> pause() async {

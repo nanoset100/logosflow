@@ -7,6 +7,7 @@ import '../../../core/constants/colors.dart';
 import '../../../data/models/sermon_model.dart';
 import '../../../data/services/sermon_service.dart';
 import '../../../data/services/ai_sermon_service.dart';
+import '../../../data/services/tts_service.dart';
 import '../../../data/services/youtube_service.dart';
 import '../../../data/services/whisper_service.dart';
 
@@ -122,15 +123,29 @@ class _SermonRegisterScreenState extends State<SermonRegisterScreen> {
       };
 
       // 2. Firestore 저장 (churches/{code}/sermons)
-      await FirebaseFirestore.instance
+      final docRef = await FirebaseFirestore.instance
           .collection('churches')
           .doc(_churchCode)
           .collection('sermons')
           .add(sermonData);
 
+      // 3. TTS 캐싱 (요약 있을 때만, 실패해도 등록은 완료)
+      final summary = _summaryCtrl.text.trim();
+      if (summary.isNotEmpty) {
+        _showSnack('설교 오디오 생성 중...');
+        final audioUrl = await TtsService.cacheForSermon(
+          churchCode: _churchCode!,
+          sermonId: docRef.id,
+          text: summary,
+        );
+        if (audioUrl != null) {
+          await docRef.update({'audioUrl': audioUrl});
+        }
+      }
+
       if (!mounted) return;
 
-      // 3. 성공 피드백 및 화면 이동
+      // 4. 성공 피드백 및 화면 이동
       _showSnack('설교가 등록되었습니다');
       Navigator.of(context).pop();
     } catch (e) {
