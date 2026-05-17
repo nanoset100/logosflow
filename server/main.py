@@ -32,6 +32,7 @@ _groq_key = os.getenv("GROQ_API_KEY")
 groq_client = AsyncGroq(api_key=_groq_key) if _groq_key else None
 
 MAX_WHISPER_BYTES = 24 * 1024 * 1024  # 24MB
+MAX_CHUNK_SECONDS = 1200  # 20분 청크 분할 기준
 
 # ─── Firebase Admin 초기화 (FCM 푸시 알림용) ──────────────────────────────────
 import firebase_admin
@@ -287,41 +288,100 @@ async def compress_audio(input_path: str, output_path: str) -> None:
         raise HTTPException(status_code=500, detail=f"ffmpeg 오류: {stderr.decode()}")
 
 
-async def transcribe_file(audio_path: str, language: str = "ko") -> str:
-    file_size = Path(audio_path).stat().st_size
-
-    if file_size > MAX_WHISPER_BYTES:
-        compressed_path = audio_path + "_compressed.mp3"
-        await compress_audio(audio_path, compressed_path)
-        transcribe_path = compressed_path
-    else:
-        transcribe_path = audio_path
-
+async def get_audio_duration(audio_path: str) -> float:
+    """ffprobe로 오디오 길이(초) 반환"""
+    cmd = [
+        "ffprobe", "-v", "quiet", "-print_format", "json",
+        "-show_format", audio_path,
+    ]
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await proc.communicate()
+    if proc.returncode != 0:
+        return 0.0
     try:
-        with open(transcribe_path, "rb") as f:
-            if groq_client:
-                # Groq Whisper (무료, 고정확도)
-                result = await groq_client.audio.transcriptions.create(
-                    model="whisper-large-v3-turbo",
-                    file=(Path(transcribe_path).name, f, "audio/mpeg"),
-                    language=language,
-                    response_format="text",
-                )
-            else:
-                # Groq 키 없을 시 OpenAI 폴백
-                result = await client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=f,
-                    language=language,
-                    response_format="text",
-                )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Whisper API 오류: {str(e)}")
-    finally:
-        if file_size > MAX_WHISPER_BYTES:
-            Path(transcribe_path).unlink(missing_ok=True)
+        data = json.loads(stdout.decode())
+        return float(data.get("format", {}).get("duration", 0))
+    except Exception:
+        return 0.0
 
+
+async def split_into_chunks(input_path: str, chunk_dir: str) -> list:
+    """오디오를 20분 청크로 분할 + 압축 (64kbps mono 16kHz)"""
+    output_pattern = str(Path(chunk_dir) / "chunk_%03d.mp3")
+    cmd = [
+        "ffmpeg", "-y", "-i", input_path,
+        "-f", "segment", "-segment_time", str(MAX_CHUNK_SECONDS),
+        "-vn", "-ar", "16000", "-ac", "1", "-b:a", "64k",
+        output_pattern,
+    ]
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        raise HTTPException(status_code=500, detail=f"오디오 분할 오류: {stderr.decode()[:200]}")
+    return sorted(str(p) for p in Path(chunk_dir).glob("chunk_*.mp3"))
+
+
+async def _call_whisper(audio_path: str, language: str) -> str:
+    with open(audio_path, "rb") as f:
+        if groq_client:
+            result = await groq_client.audio.transcriptions.create(
+                model="whisper-large-v3-turbo",
+                file=(Path(audio_path).name, f, "audio/mpeg"),
+                language=language,
+                response_format="text",
+            )
+        else:
+            result = await client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f,
+                language=language,
+                response_format="text",
+            )
     return result if isinstance(result, str) else str(result)
+
+
+async def transcribe_file(audio_path: str, language: str = "ko") -> str:
+    duration = await get_audio_duration(audio_path)
+
+    if duration > MAX_CHUNK_SECONDS:
+        # 20분 초과: 청크로 분할 후 순차 STT
+        with tempfile.TemporaryDirectory() as chunk_dir:
+            chunks = await split_into_chunks(audio_path, chunk_dir)
+            if not chunks:
+                raise HTTPException(status_code=500, detail="오디오 분할 실패")
+            try:
+                texts = []
+                for chunk_path in chunks:
+                    text = await _call_whisper(chunk_path, language)
+                    texts.append(text.strip())
+                return " ".join(t for t in texts if t)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Whisper API 오류: {str(e)}")
+    else:
+        # 20분 이하: 필요 시 압축 후 STT
+        file_size = Path(audio_path).stat().st_size
+        if file_size > MAX_WHISPER_BYTES:
+            compressed_path = audio_path + "_compressed.mp3"
+            await compress_audio(audio_path, compressed_path)
+            transcribe_path = compressed_path
+        else:
+            transcribe_path = audio_path
+
+        try:
+            return await _call_whisper(transcribe_path, language)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Whisper API 오류: {str(e)}")
+        finally:
+            if file_size > MAX_WHISPER_BYTES:
+                Path(transcribe_path).unlink(missing_ok=True)
 
 
 @app.get("/", response_class=HTMLResponse)
