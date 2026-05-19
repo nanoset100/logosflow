@@ -676,7 +676,7 @@ async def analyze_sermon(req: AnalyzeRequest, x_app_key: str = Header("")):
     ) if scripture else ""
 
     system_prompt = (
-        "당신은 한국 침례교회의 설교 전문 분석가입니다. "
+        "당신은 한국 정통보수 신학의 설교 전문 분석가입니다. "
         "설교 텍스트를 분석하여 성도들의 신앙 성장을 돕는 요약과 6일 묵상(월~토)을 작성합니다. "
         "신학적으로 정확하고 평신도가 이해하기 쉬운 언어를 사용하세요. "
         "반드시 JSON 형식만 반환하고 추가 설명은 쓰지 마세요.\n\n"
