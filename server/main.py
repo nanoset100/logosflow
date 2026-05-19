@@ -559,12 +559,22 @@ async def generate_prayer(req: PrayerRequest, x_app_key: str = Header("")):
             max_tokens=5000,
             temperature=0.7,
         )
-        prayer = completion.choices[0].message.content.strip()
-        # AI가 마무리 문구를 빠뜨린 경우 강제로 추가 (150자 범위, 다양한 변형 대응)
+        choice = completion.choices[0]
+        prayer = choice.message.content.strip()
+        finish_reason = choice.finish_reason
         ending = "예수님의 이름으로 기도합니다. 아멘."
-        tail = prayer[-150:]
-        if "예수" not in tail and "아멘" not in tail:
+
+        if finish_reason == "length":
+            # 토큰 초과로 잘린 경우: 마지막 완성 문장(~다.)까지 자르고 마무리 추가
+            idx = prayer.rfind("다.")
+            if idx != -1:
+                prayer = prayer[:idx + 2]
             prayer = prayer + "\n\n" + ending
+        else:
+            # 정상 종료지만 마무리 문구 누락 시 추가
+            # "이름으로 기도합니다"는 본문에 나올 수 없는 마무리 전용 표현
+            if "이름으로 기도합니다" not in prayer[-100:]:
+                prayer = prayer + "\n\n" + ending
     except OpenAIError as e:
         raise HTTPException(status_code=500, detail=f"AI 오류: {str(e)}")
 
