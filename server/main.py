@@ -560,6 +560,10 @@ async def generate_prayer(req: PrayerRequest, x_app_key: str = Header("")):
             temperature=0.7,
         )
         prayer = completion.choices[0].message.content.strip()
+        # AI가 마무리 문구를 빠뜨린 경우 강제로 추가
+        ending = "예수님의 이름으로 기도합니다. 아멘."
+        if "예수님의 이름으로" not in prayer[-80:]:
+            prayer = prayer + "\n\n" + ending
     except OpenAIError as e:
         raise HTTPException(status_code=500, detail=f"AI 오류: {str(e)}")
 
