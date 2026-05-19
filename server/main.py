@@ -556,13 +556,14 @@ async def generate_prayer(req: PrayerRequest, x_app_key: str = Header("")):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": "대표기도문을 작성해주세요."},
             ],
-            max_tokens=3500,
+            max_tokens=5000,
             temperature=0.7,
         )
         prayer = completion.choices[0].message.content.strip()
-        # AI가 마무리 문구를 빠뜨린 경우 강제로 추가
+        # AI가 마무리 문구를 빠뜨린 경우 강제로 추가 (150자 범위, 다양한 변형 대응)
         ending = "예수님의 이름으로 기도합니다. 아멘."
-        if "예수님의 이름으로" not in prayer[-80:]:
+        tail = prayer[-150:]
+        if "예수" not in tail and "아멘" not in tail:
             prayer = prayer + "\n\n" + ending
     except OpenAIError as e:
         raise HTTPException(status_code=500, detail=f"AI 오류: {str(e)}")
